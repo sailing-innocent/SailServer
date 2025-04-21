@@ -8,15 +8,9 @@
 
 import dotenv
 import os 
+from utils.env import read_env
 
-def read_env(mode='dev'):
-    # read .env.dev file or .env.prod file
-    if mode == 'dev':
-        env_file = '.env.dev'
-    elif mode == 'prod':
-        env_file = '.env.prod'
-    else:
-        raise ValueError('mode must be dev or prod')
-
-    dotenv.load_dotenv(env_file)
-
+if __name__ == "__main__":
+    read_env('dev')
+    # read_env('debug')
+    # read_env('prod')
