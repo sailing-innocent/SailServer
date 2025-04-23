@@ -18,7 +18,6 @@ if __name__ == "__main__":
     print(os.environ.get('POSTGRE_URI'))
     parser = argparse.ArgumentParser(description="Debug Script")
     parser.add_argument("--task", type=str, help="Task to run")
-    # Task arguments, A, B, C, ..
     parser.add_argument("--args", type=str, nargs='+', help="Task arguments")
     args = parser.parse_args()
 
