@@ -9,7 +9,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from .orm import ORMBase
 from sqlalchemy.orm import relationship
-from internal.util.state import StateBits
+from utils.state import StateBits
 
 
 # Available Time Arena

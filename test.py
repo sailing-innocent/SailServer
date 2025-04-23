@@ -7,8 +7,8 @@
 # ---------------------------------
 
 from utils.env import read_env
-import os 
+read_env('dev') # use dev environment for testing
 
 if __name__ == "__main__":
-    read_env('dev') # use dev environment for testing
     print(os.environ.get('POSTGRE_URI'))
+    # ----------------------------------------

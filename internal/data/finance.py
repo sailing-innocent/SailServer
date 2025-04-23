@@ -10,7 +10,8 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from .orm import ORMBase
 from sqlalchemy.orm import relationship
 import time
-from internal.util.state import StateBits
+
+from utils.state import StateBits
 from enum import Enum
 
 __all__ = [

@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import MetaData
 from typing import Generator
 import functools
-from internal.data.orm import ORMBase
 
+from internal.data.orm import ORMBase
 # import all ORM models
 import internal.data.project
 import internal.data.health
