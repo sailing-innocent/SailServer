@@ -6,7 +6,7 @@
 # @version 1.0
 # ---------------------------------
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary
 from sqlalchemy.orm import relationship
 
 from .orm import ORMBase
@@ -57,3 +57,12 @@ class Content(ORMBase):
         back_populates="content",
         primaryjoin="Content.id==ContentNode.content_id",
     )
+
+
+class Image(ORMBase):
+    __tablename__ = "images"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)  # image name
+    data = Column(LargeBinary, nullable=False)  # image data in binary
+    htime = Column(Integer, nullable=False)  # update time
+    desp = Column(String(255), nullable=True)  # image description
