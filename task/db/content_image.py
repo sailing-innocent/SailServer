@@ -7,15 +7,16 @@
 # ---------------------------------
 
 from utils.image import image_to_bytes, bytes_to_image
-from internal.model.content import create_image_impl, get_image_impl, delete_image_impl, ImageCreate
+from internal.model.content import create_image_impl, get_image_impl, delete_image_impl, ImageCreate, get_images_impl
 from PIL import Image 
-import os 
-import numpy as np 
 
-def create_image(db_func, img_path, img_name):
+def create_image(db_func, img_path: str, img_name: str = "", debug: bool = False):
     db = next(db_func())
     image = Image.open(img_path).convert("RGB")
     img_data = image_to_bytes(image, format="PNG")
+    if img_name == "":
+        img_name = img_path.split("\\")[-1].split(".")[0]
+
     img_create = ImageCreate(
         name=img_name,
         data=img_data,
@@ -36,12 +37,41 @@ def create_image(db_func, img_path, img_name):
     print("Image format: ", image.format)
     print("Image mode: ", image.mode)
     # Save to out.png
+    if debug:
+        image.save("out.png")
+        print("Saved image to out.png")
+        delete_image_impl(db, id)
+        print("Deleted image from db, with id: ", id)
+
+    return "Done"
+
+def read_image(db_func, id: int):
+    db = next(db_func())
+    image = get_image_impl(db, id)
+    print("Read image from db, with id: ", image.id)
+
+    image = bytes_to_image(image.data)
+
+    # print image metadata
+    print("Image size: ", image.size)
+    print("Image format: ", image.format)
+    print("Image mode: ", image.mode)
+    # Save to out.png
     image.save("out.png")
     print("Saved image to out.png")
+    return "Done"
 
-    # delete image from db
-    delete_image_impl(db, id)
-    print("Deleted image from db, with id: ", id)
-    
-
+def read_images(db_func, out_dir: str):
+    db = next(db_func())
+    images = get_images_impl(db)
+    print("Read images from db, with ids: ", [image.id for image in images])
+    for dbimage in images:
+        image = bytes_to_image(dbimage.data)
+        # print image metadata
+        print("Image size: ", image.size)
+        print("Image format: ", image.format)
+        print("Image mode: ", image.mode)
+        # Save to out.png
+        image.save(f"{out_dir}/{dbimage.name}.png")
+        print(f"Saved image to {out_dir}/{dbimage.name}.png")
     return "Done"

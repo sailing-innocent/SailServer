@@ -291,7 +291,7 @@ def delete_image_impl(db, image_id: int):
     db.commit()
     return read_from_image(image)
 
-def get_images_impl(db, skip: int, limit: int, no_data: bool = False):
+def get_images_impl(db, skip: int = 0, limit: int = 0, no_data: bool = False):
     query = db.query(DBImage).order_by(DBImage.id)
     if skip > 0:
         query = query.offset(skip)
