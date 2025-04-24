@@ -59,10 +59,11 @@ class Content(ORMBase):
     )
 
 
-class Image(ORMBase):
+class DBImage(ORMBase):
     __tablename__ = "images"
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)  # image name
     data = Column(LargeBinary, nullable=False)  # image data in binary
     htime = Column(Integer, nullable=False)  # update time
     desp = Column(String(255), nullable=True)  # image description
+

@@ -7,7 +7,7 @@
 # ---------------------------------
 
 from task.db.basic import check_db_conn 
-from task.db.money import calc_loan
+from task.db.content_image import create_image
 
 class DBTaskDispatcher:
     def __init__(self, db_func):
@@ -15,7 +15,7 @@ class DBTaskDispatcher:
         
         self.tasks = {
             "check_db_conn": check_db_conn,
-            "calc_loan": calc_loan,
+            "create_image": create_image,
         }
 
     def dispatch(self, task_name, task_args):

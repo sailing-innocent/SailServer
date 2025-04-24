@@ -214,7 +214,7 @@ def read_books_info_impl(db, skip: int, limit: int):
 # Image Resources
 # ----------------------------------------
 
-from internal.data.content import Image
+from internal.data.content import DBImage
 
 class ImageCreate(BaseModel):
     name: str
@@ -230,7 +230,7 @@ class ImageRead(BaseModel):
     desp: str
 
 def image_from_create(create: ImageCreate):
-    return Image(
+    return DBImage(
         name=create.name,
         data=create.data,
         htime=create.htime,
@@ -238,7 +238,7 @@ def image_from_create(create: ImageCreate):
     )
 
 def image_from_read(read: ImageRead):
-    return Image(
+    return DBImage(
         id=read.id,
         name=read.name,
         data=read.data,
@@ -246,7 +246,7 @@ def image_from_read(read: ImageRead):
         desp=read.desp,
     )
 
-def read_from_image(image: Image, no_data: bool = False):
+def read_from_image(image: DBImage, no_data: bool = False):
     data = image.data if not no_data else None
     return ImageRead(
         id=image.id,
@@ -263,13 +263,13 @@ def create_image_impl(db, image_create: ImageCreate):
     return read_from_image(image)
 
 def get_image_impl(db, image_id: int, no_data: bool = False):
-    image = db.query(Image).filter(Image.id == image_id).first()
+    image = db.query(DBImage).filter(DBImage.id == image_id).first()
     if image is None:
         return None
     return read_from_image(image, no_data)
 
 def update_image_impl(db, image_id: int, image_update: ImageCreate):
-    image = db.query(Image).filter(Image.id == image_id).first()
+    image = db.query(DBImage).filter(DBImage.id == image_id).first()
     if image is None:
         return None
     if image_update.name is not None:
@@ -284,7 +284,7 @@ def update_image_impl(db, image_id: int, image_update: ImageCreate):
     return read_from_image(image)
 
 def delete_image_impl(db, image_id: int):
-    image = db.query(Image).filter(Image.id == image_id).first()
+    image = db.query(DBImage).filter(DBImage.id == image_id).first()
     if image is None:
         return None
     db.delete(image)
@@ -292,7 +292,7 @@ def delete_image_impl(db, image_id: int):
     return read_from_image(image)
 
 def get_images_impl(db, skip: int, limit: int, no_data: bool = False):
-    query = db.query(Image).order_by(Image.id)
+    query = db.query(DBImage).order_by(DBImage.id)
     if skip > 0:
         query = query.offset(skip)
     if limit > 0:
