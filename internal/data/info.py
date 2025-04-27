@@ -6,7 +6,7 @@
 # @version 1.0
 # ---------------------------------
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey,BigInteger
 from .orm import ORMBase
 from sqlalchemy.orm import relationship
 from utils.state import StateBits
@@ -81,3 +81,13 @@ class ClothState(StateBits):
 
     def is_deprecated(self):
         return self.is_attrib("deprecated")
+
+class ServiceAccount(ORMBase):
+    __tablename__ = "service_account"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)  # account name
+    entry = Column(String(255), nullable=False)  # entry website/app name
+    username = Column(String(255), nullable=False)  # username
+    password = Column(String(255), nullable=False)  # password
+    desp = Column(String(255), nullable=True)  # account description
+    expire_time = Column(BigInteger, nullable=False)  # expire time

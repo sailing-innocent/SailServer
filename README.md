@@ -8,5 +8,11 @@
 
 ## Source
 
-- scripts: general construct and edit script
-- 
+- task
+- test
+- utils
+- internal
+  - data
+  - model
+  - service
+  - db.py
