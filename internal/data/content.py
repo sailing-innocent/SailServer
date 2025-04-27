@@ -31,7 +31,7 @@ class Chapter(ORMBase):
     mtime = Column(Integer)
     order = Column(Integer)  # order of the chapter in the book
 
-
+# 如果不想进行分段，可以直接从ContentNode查询到Content的id，然后通过Content的id查询到Content的内容，用start和offset来截取返回
 class ContentNode(ORMBase):
     __tablename__ = "content_node"
     id = Column(Integer, primary_key=True)
@@ -45,6 +45,15 @@ class ContentNode(ORMBase):
     start = Column(Integer)
     offset = Column(Integer)
 
+# The LINKS between content-nodes
+# 想要进行分段操作的话，通过Chapter查询到ContentNode的id，然后在ParagraphTree中查询所有分段ID, 迭代出所有的分段
+# 通过分段ID查询到ContentNode的id, 然后通过ContentNode的id查询到Content的id, 然后通过Content的id查询到Content的内容
+
+class ParagraphTree(ORMBase):
+    __tablename__ = "paragraph_tree"
+    id = Column(Integer, primary_key=True)
+    from_content_node_id = Column(Integer, ForeignKey("content_node.id"))
+    to_content_node_id = Column(Integer, ForeignKey("content_node.id"))
 
 # The Real Content Storage
 class Content(ORMBase):

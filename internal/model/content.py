@@ -8,7 +8,7 @@
 
 from pydantic import BaseModel
 
-from internal.data.content import Book, Chapter, ContentNode, Content
+from internal.data.content import Book, Chapter, ContentNode, Content, ParagraphTree
 from utils.book_parser import BPBook, BPChapter
 import time
 import logging
@@ -209,6 +209,39 @@ def read_books_info_impl(db, skip: int, limit: int):
     books = db.query(Book).order_by(Book.id).offset(skip).limit(limit).all()
     return [BookInfo(id=book.id, title=book.title) for book in books]
 
+class ParagraphTreeCreate(BaseModel):
+    from_content_node_id: int
+    to_content_node_id: int
+
+class ParagraphTreeRead(BaseModel):
+    id: int
+    from_content_node_id: int
+    to_content_node_id: int
+
+def paragraph_tree_from_create(create: ParagraphTreeCreate):
+    return ParagraphTree(
+        from_content_node_id=create.from_content_node_id,
+        to_content_node_id=create.to_content_node_id,
+    )
+
+def read_from_paragraph_tree(tree: ParagraphTree):
+    return ParagraphTreeRead(
+        id=tree.id,
+        from_content_node_id=tree.from_content_node_id,
+        to_content_node_id=tree.to_content_node_id,
+    )
+
+def create_paragraph_tree_impl(db, tree_create: ParagraphTreeCreate):
+    tree = paragraph_tree_from_create(tree_create)
+    db.add(tree)
+    db.commit()
+    return read_from_paragraph_tree(tree)
+
+def get_paragraph_tree_impl(db, tree_id: int):
+    tree = db.query(ParagraphTree).filter(ParagraphTree.id == tree_id).first()
+    if tree is None:
+        return None
+    return read_from_paragraph_tree(tree)
 
 # ----------------------------------------
 # Image Resources
