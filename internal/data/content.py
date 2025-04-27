@@ -67,6 +67,9 @@ class Content(ORMBase):
         primaryjoin="Content.id==ContentNode.content_id",
     )
 
+# --------------
+# Image Storage
+# --------------
 
 class DBImage(ORMBase):
     __tablename__ = "images"
@@ -75,4 +78,3 @@ class DBImage(ORMBase):
     data = Column(LargeBinary, nullable=False)  # image data in binary
     htime = Column(Integer, nullable=False)  # update time
     desp = Column(String(255), nullable=True)  # image description
-
