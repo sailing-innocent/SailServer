@@ -27,6 +27,15 @@ class ContentCreate(BaseModel):
     data: str
     size: int
 
+def content_from_create(create: ContentCreate):
+    return Content(data=create.data, size=create.size)
+
+def create_content_impl(db, crt: ContentCreate):
+    content = content_from_create(crt)
+    db.add(content)
+    db.commit()
+    return content.id, content.size
+
 
 class ContentNodeCreate(BaseModel):
     raw_tags: str
@@ -34,43 +43,6 @@ class ContentNodeCreate(BaseModel):
     content_id: int
     start: int
     offset: int
-
-
-class BookCreate(BaseModel):
-    title: str
-    author: str
-
-
-class BookRead(BaseModel):
-    id: int
-    title: str
-    author: str
-    chapters: list[int]  # list of chapter ids
-
-
-class BookInfo(BaseModel):
-    id: int
-    title: str
-
-
-class ChapterCreate(BaseModel):
-    title: str
-    book_id: int
-    content_node_id: int
-    order: int
-
-
-class ChapterRead(BaseModel):
-    id: int
-    title: str
-    book_id: int
-    content: str
-    order: int
-
-
-def content_from_create(create: ContentCreate):
-    return Content(data=create.data, size=create.size)
-
 
 def content_node_from_create(create: ContentNodeCreate):
     return ContentNode(
@@ -82,34 +54,11 @@ def content_node_from_create(create: ContentNodeCreate):
     )
 
 
-def chapter_from_create(create: ChapterCreate):
-    return Chapter(
-        title=create.title,
-        book_id=create.book_id,
-        content_node_id=create.content_node_id,
-        ctime=int(time.time()),
-        mtime=int(time.time()),
-        order=create.order,
-    )
-
-
-def book_from_create(create: BookCreate):
-    return Book(title=create.title, author=create.author)
-
-
 def create_content_node_impl(db, crt: ContentNodeCreate):
     content_node = content_node_from_create(crt)
     db.add(content_node)
     db.commit()
     return content_node.id
-
-
-def create_content_impl(db, crt: ContentCreate):
-    content = content_from_create(crt)
-    db.add(content)
-    db.commit()
-    return content.id, content.size
-
 
 def create_content_with_node_impl(db, crt: ContentCreate):
     cid, sz = create_content_impl(db, crt)
@@ -124,12 +73,88 @@ def create_content_with_node_impl(db, crt: ContentCreate):
     return create_content_node_impl(db, node_crt)
 
 
+class BookCreate(BaseModel):
+    title: str
+    author: str
+
+def book_from_create(create: BookCreate):
+    return Book(title=create.title, author=create.author)
+
+def create_book_impl(db, crt: BookCreate):
+    book = book_from_create(crt)
+    db.add(book)
+    db.commit()
+    return book.id
+
+
+class BookRead(BaseModel):
+    id: int
+    title: str
+    author: str
+    chapters: list[int]  # list of chapter ids
+
+
+class BookInfo(BaseModel):
+    id: int
+    title: str
+
+class ChapterCreate(BaseModel):
+    title: str
+    book_id: int
+    content_node_id: int
+    order: int
+
+def chapter_from_create(create: ChapterCreate):
+    return Chapter(
+        title=create.title,
+        book_id=create.book_id,
+        content_node_id=create.content_node_id,
+        ctime=int(time.time()),
+        mtime=int(time.time()),
+        order=create.order,
+    )
+
 def create_chapter_impl(db, crt: ChapterCreate):
     chapter = chapter_from_create(crt)
     db.add(chapter)
     db.commit()
     return chapter.id
 
+class ChapterRead(BaseModel):
+    id: int
+    title: str
+    book_id: int
+    content: str
+    order: int
+
+class ChapterInfo(BaseModel):
+    title: str 
+    book_id: int
+    content_node_id: int
+    order: int
+
+def info_from_chapter(chapter: Chapter):
+    return ChapterInfo(
+        title=chapter.title,
+        book_id=chapter.book_id,
+        content_node_id=chapter.content_node_id,
+        order=chapter.order,
+    )
+
+def get_chapter_info_impl(db, chapter_id: int):
+    chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+    if chapter is None:
+        return None
+    return info_from_chapter(chapter)
+
+def get_chapter_info_by_book_impl(db, book_id: int, order: int = -1):
+    if order == -1:
+        chapters = db.query(Chapter).filter(Chapter.book_id == book_id).all()
+    else:
+        chapters = db.query(Chapter).filter(
+            Chapter.book_id == book_id, Chapter.order == order
+        ).all()
+    return [info_from_chapter(chapter) for chapter in chapters]
 
 def create_chapter_from_parser(db, chapter: BPChapter, book_id, order):
     content_crt = ContentCreate(data=chapter.content, size=len(chapter.content))
@@ -141,13 +166,6 @@ def create_chapter_from_parser(db, chapter: BPChapter, book_id, order):
         order=order,
     )
     return create_chapter_impl(db, crt)
-
-
-def create_book_impl(db, crt: BookCreate):
-    book = book_from_create(crt)
-    db.add(book)
-    db.commit()
-    return book.id
 
 
 def create_book_from_parser(db, book: BPBook):
@@ -185,7 +203,6 @@ def read_chapter_impl(db, chapter_id: int):
         content=content,
         order=chapter.order,
     )
-
 
 def read_book_impl(db, book_id: int):
     book = db.query(Book).filter(Book.id == book_id).first()

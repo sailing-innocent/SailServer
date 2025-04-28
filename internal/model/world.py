@@ -143,6 +143,12 @@ def get_story_impl(db, story_id: int) -> StoryRead:
         return None
     return read_from_story(story)
 
+def get_storys_by_content_node_impl(db, content_node_id: int) -> list[StoryRead]:
+    stories = db.query(Story).filter(Story.content_node_id == content_node_id).all()
+    if stories is None:
+        return None
+    return [read_from_story(story) for story in stories]
+
 # -- Description
 class DescriptionCreate(BaseModel):
     content_node_id: int
