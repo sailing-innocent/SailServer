@@ -52,8 +52,8 @@ class ContentNode(ORMBase):
 class ParagraphTree(ORMBase):
     __tablename__ = "paragraph_tree"
     id = Column(Integer, primary_key=True)
-    from_content_node_id = Column(Integer, ForeignKey("content_node.id"))
-    to_content_node_id = Column(Integer, ForeignKey("content_node.id"))
+    root_content_node_id = Column(Integer, ForeignKey("content_node.id")) # root node attached
+    data = Column(LargeBinary)  # json binary data
 
 # The Real Content Storage
 class Content(ORMBase):
