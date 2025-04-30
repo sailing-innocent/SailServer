@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# @file necessity.py
-# @brief The Necessity Data Format
+# @file info.py
+# @brief Peronsal Information Storage
 # @author sailing-innocent
 # @date 2025-02-03
 # @version 1.0

@@ -7,6 +7,7 @@
 # ---------------------------------
 
 from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from .orm import ORMBase
@@ -51,9 +52,10 @@ class ContentNode(ORMBase):
 
 class ParagraphTree(ORMBase):
     __tablename__ = "paragraph_tree"
+    __table_args__ = {"extend_existing": True}
     id = Column(Integer, primary_key=True)
     root_content_node_id = Column(Integer, ForeignKey("content_node.id")) # root node attached
-    data = Column(LargeBinary)  # json binary data
+    data = Column(JSONB)  # json binary data
 
 # The Real Content Storage
 class Content(ORMBase):

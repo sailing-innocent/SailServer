@@ -8,6 +8,7 @@
 
 from pydantic import BaseModel
 from internal.data.world import Character, Setting, Story, Description, ContentNote
+from sqlalchemy.dialects.postgresql import insert 
 
 def clean_all_impl(db):
     db.query(ContentNote).delete()
@@ -21,12 +22,12 @@ def clean_all_impl(db):
 
 class CharacterCreate(BaseModel):
     name: str
-    data: bytes  # json binary
+    data: dict
 
 class CharacterRead(BaseModel):
     id: int
     name: str
-    data: bytes  # json binary
+    data: dict
 
 def chracter_from_create(character_create: CharacterCreate) -> Character:
     return Character(
@@ -107,13 +108,13 @@ def update_setting_impl(db, setting_id: int, setting_update: SettingCreate) -> S
 class StoryCreate(BaseModel):
     name: str
     content_node_id: int
-    data: bytes  # json binary
+    data: dict 
 
 class StoryRead(BaseModel):
     id: int
     name: str
     content_node_id: int
-    data: bytes  # json binary
+    data: dict
 
 def story_from_create(story_create: StoryCreate) -> Story:
     return Story(

@@ -9,6 +9,7 @@
 import csv 
 from internal.model.content import get_chapter_info_by_book_impl
 from internal.model.world import StoryCreate, create_story_impl, get_storys_by_content_node_impl
+
 from utils.jsonb import dict_to_json_bytes, json_bytes_to_dict
 
 def story_conclude(db_func, csv_fpath: str) -> str:
@@ -41,7 +42,7 @@ def story_conclude(db_func, csv_fpath: str) -> str:
             story_crt = StoryCreate(
                 name="conclude",
                 content_node_id=content_node_id,
-                data=dict_to_json_bytes(story_dict),
+                data=story_dict,
             )
 
             create_story_impl(db, story_crt)
