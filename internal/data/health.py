@@ -8,6 +8,7 @@
 
 from sqlalchemy import Column, Integer, String
 from .orm import ORMBase
+from dataclasses import dataclass, field
 
 
 # The Raw Weight Data
@@ -25,3 +26,26 @@ class WeightRecord(ORMBase):
     value = Column(String)  # float in kg
     htime = Column(Integer)  # happen time
     tag = Column(String)  # tag (daily, weekly, monthly)
+
+
+@dataclass
+class WeightData:
+    """
+    The Weight Data
+    """
+
+    id: int
+    value: float
+    htime: int
+
+
+@dataclass
+class WeightRecordData:
+    """
+    The Weight Data
+    """
+
+    id: int
+    value: float
+    htime: int
+    tag: str = field(default="daily")

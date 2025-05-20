@@ -7,7 +7,7 @@
 # ---------------------------------
 
 from pydantic import BaseModel
-from internal.data.health import Weight, WeightRecord
+from internal.data.health import Weight, WeightRecord, WeightData
 import time
 
 
@@ -51,7 +51,7 @@ def create_weight_impl(db, weight_create: WeightCreate):
 
 def read_weight_impl(db, weight_record_id: int):
     weight = db.query(Weight).filter(Weight.id == weight_record_id).first()
-    return weight
+    return WeightData(weight.id, weight.value, weight.htime) if weight else None
 
 
 def read_weights_impl(

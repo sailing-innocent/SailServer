@@ -14,10 +14,12 @@ import argparse
 
 from internal.db import g_db_func
 from task.db.dispatcher import DBTaskDispatcher
+import logging
 
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    print(os.environ.get("POSTGRE_URI"))
+    logger.info(os.environ.get("POSTGRE_URI"))
     parser = argparse.ArgumentParser(description="Debug Script")
     parser.add_argument("--task", type=str, help="Task to run")
     parser.add_argument("--args", type=str, nargs="+", help="Task arguments")
@@ -31,6 +33,6 @@ if __name__ == "__main__":
     dispatcher = DBTaskDispatcher(g_db_func)
     try:
         result = dispatcher.dispatch(task_name, task_args)
-        print(f"Task {task_name} result: {result}")
+        logger.info(f"Task {task_name} result: {result}")
     except Exception as e:
-        print(f"Error: {e}")
+        logger.info(f"Error: {e}")

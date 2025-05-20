@@ -16,6 +16,8 @@ sys.path.insert(0, project_root)
 
 from utils.env import read_env
 
+read_env("dev")  # use dev environment for testing
+
 
 @pytest.fixture
 def db():
@@ -23,7 +25,7 @@ def db():
     Fixture to provide a database function for testing.
     This function should be replaced with the actual database function used in your application.
     """
-    read_env("dev")  # use dev environment for testing
+
     from internal.db import g_db_func
 
     return next(g_db_func())
