@@ -11,7 +11,25 @@ dependencies = [
     "pillow>=11.2.1",
     "psycopg2>=2.9.10",
     "pydantic>=2.11.3",
+    "pytest>=8.3.5",
     "sqlalchemy>=2.0.40",
     "tqdm>=4.67.1",
     "uvicorn>=0.34.2",
+]
+
+[tool.pytest.ini_options]
+python_paths=[
+    "."
+]
+testpaths = [
+    "tests",
+]
+addopts = [
+    "--tb=short",
+    "--disable-warnings",
+    "-p no:warnings",
+    "-p no:cacheprovider",
+]
+markers = [
+    "asyncio: mark test as asyncio",
 ]
