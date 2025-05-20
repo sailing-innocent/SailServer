@@ -14,6 +14,7 @@ from typing import Generator
 import functools
 
 from internal.data.orm import ORMBase
+
 # import all ORM models
 import internal.data.project
 import internal.data.health
@@ -21,7 +22,7 @@ import internal.data.content
 import internal.data.finance
 import internal.data.info
 import internal.data.world
-import os 
+import os
 
 __all__ = ["Database", "g_db_func", "db_session"]
 
@@ -43,7 +44,7 @@ class Database:
         else:
             Database.__instance = self
 
-        __uri = os.environ.get("POSTGRE_URI") 
+        __uri = os.environ.get("POSTGRE_URI")
         print("Connecting to ", __uri)
         self.__engine = create_engine(__uri)
         self.SessionLocal = sessionmaker(
@@ -76,6 +77,7 @@ class Database:
 
 
 g_db_func = Database.get_instance().get_db
+
 
 def db_session(func):
     @functools.wraps(func)

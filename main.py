@@ -7,24 +7,25 @@
 # ---------------------------------
 
 from utils.env import read_env
-read_env('prod')
-import os 
-import argparse 
+
+read_env("prod")
+import os
+import argparse
 
 from internal.db import g_db_func
 from task.db.dispatcher import DBTaskDispatcher
 
 
 if __name__ == "__main__":
-    print(os.environ.get('POSTGRE_URI'))
+    print(os.environ.get("POSTGRE_URI"))
     parser = argparse.ArgumentParser(description="Debug Script")
     parser.add_argument("--task", type=str, help="Task to run")
-    parser.add_argument("--args", type=str, nargs='+', help="Task arguments")
+    parser.add_argument("--args", type=str, nargs="+", help="Task arguments")
     args = parser.parse_args()
 
     task_name = args.task
     task_args = args.args
-    if task_args is None: # change None to empty list iterable
+    if task_args is None:  # change None to empty list iterable
         task_args = []
 
     dispatcher = DBTaskDispatcher(g_db_func)

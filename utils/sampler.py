@@ -8,6 +8,7 @@
 
 from typing import List, Tuple, Dict, Any
 
+
 class TimeValueSampler:
     """
     A class to sample time and value pairs.
@@ -22,7 +23,7 @@ class TimeValueSampler:
         """
         self.time_reqs = time_reqs
         self.influence = influence
-        self.time_values: List[Tuple[int, int]] = get_time_value_func() 
+        self.time_values: List[Tuple[int, int]] = get_time_value_func()
         # assume time_reqs and time_values are sorted
 
     def gaussian_kernel(self, x: float, mu: float, sigma: float) -> float:
@@ -34,23 +35,24 @@ class TimeValueSampler:
         :param sigma: The standard deviation of the Gaussian distribution.
         :return: The value of the Gaussian kernel at x.
         """
-        return (1 / (sigma * (2 * 3.141592653589793) ** 0.5)) * \
-               (2.718281828459045 ** (-0.5 * ((x - mu) / sigma) ** 2))
+        return (1 / (sigma * (2 * 3.141592653589793) ** 0.5)) * (
+            2.718281828459045 ** (-0.5 * ((x - mu) / sigma) ** 2)
+        )
 
     def sample(self) -> List[Tuple[int, int]]:
         """
         Sample the time and value pairs based on the time requirements.
 
         :return: List of sampled time and value pairs.
-        - SPH Sampling: 
+        - SPH Sampling:
             - for sorted samples, calculate distance for each req and push into stack
             - for each req, calculate value in stack, if stack empty, mark it
         - Near Interpolation
             - for each empty-stack req, calculate by near interpolation
             - find the first empty-stack req
-                - if first (unlikely) use the right value 
-            - find the first non-empty-stack req 
-                - if last no (unlikely) use the left value 
+                - if first (unlikely) use the right value
+            - find the first non-empty-stack req
+                - if last no (unlikely) use the left value
             - if first and last, use the average of left and right values
         """
 
@@ -63,31 +65,31 @@ class TimeValueSampler:
         i_tv = 0
         i_rq = 0
         while i_tv < N_tv and i_rq < N_rq:
-            print(f"i_tv: {i_tv}, i_rq: {i_rq}")
+            # print(f"i_tv: {i_tv}, i_rq: {i_rq}")
             tv_time, tv_value = self.time_values[i_tv]
             rq_time = self.time_reqs[i_rq]
-            sigma = self.influence 
+            sigma = self.influence
             distance = (rq_time - tv_time) / sigma
 
-            print(f"tv_time: {tv_time}, rq_time: {rq_time}, distance: {distance}")
+            # print(f"tv_time: {tv_time}, rq_time: {rq_time}, distance: {distance}")
 
             if distance < -1:
-                pass 
+                pass
             elif distance < 1:
                 # Calculate the Gaussian kernel value
                 d = self.gaussian_kernel(distance, 0, sigma)
-                req_stack[i_rq].append((d, tv_value))            
+                req_stack[i_rq].append((d, tv_value))
             else:
-                i_rq = N_rq - 1 # Finalize the time-value pair for this stack
+                i_rq = N_rq - 1  # Finalize the time-value pair for this stack
 
             # for all request, iterate the time-value source
             i_rq += 1
             if i_rq >= N_rq:
                 i_rq = 0
                 i_tv += 1
-        
-        print(req_stack)
-        # SPH Sampling 
+
+        # print(req_stack)
+        # SPH Sampling
         for i_rq in range(N_rq):
             if len(req_stack[i_rq]) == 0:
                 # No time-value pair found for this request
@@ -98,10 +100,9 @@ class TimeValueSampler:
             for d, tv_value in req_stack[i_rq]:
                 total_value += d * tv_value
                 total_weight += d
-            
 
             res[i_rq] = total_value / total_weight
-        
+
         # Near Interpolation for empty stacks
         for i_rq in range(N_rq):
             if len(req_stack[i_rq]) == 0:
@@ -132,29 +133,40 @@ class TimeValueSampler:
                     # If no left or right value, set to 0 or some default value
                     res[i_rq] = 0
 
-        return res 
+        return res
+
 
 import unittest
 
+
 class TestTimeValueSampler(unittest.TestCase):
-    
     def setUp(self):
         # Common setup for tests
         self.time_reqs = [0, 10, 20, 30, 40, 50, 60, 100]
         self.influence = 6
-        self.mock_time_values = [(15, 100), (24, 200), (31, 220), (62, 300), (75, 400), (80, 500)]
+        self.mock_time_values = [
+            (15, 100),
+            (24, 200),
+            (31, 220),
+            (62, 300),
+            (75, 400),
+            (80, 500),
+        ]
         self.get_time_value_func = lambda: self.mock_time_values
-        
+
     def test_initialization(self):
         """Test that the TimeValueSampler initializes with correct attributes"""
-        sampler = TimeValueSampler(self.get_time_value_func, self.time_reqs, self.influence)
-        
+        sampler = TimeValueSampler(
+            self.get_time_value_func, self.time_reqs, self.influence
+        )
+
         self.assertEqual(sampler.time_reqs, self.time_reqs)
         self.assertEqual(sampler.influence, self.influence)
         self.assertEqual(sampler.time_values, self.mock_time_values)
 
         res = sampler.sample()
         print(res)
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()

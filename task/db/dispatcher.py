@@ -6,16 +6,18 @@
 # @version 1.0
 # ---------------------------------
 
-from task.db.basic import check_db_conn 
+from task.db.basic import check_db_conn
 from task.db.content_image import create_image, read_image, read_images
-from task.db.content import split_paragraph 
+from task.db.content import split_paragraph
 from task.db.service_account import create_service_account_from_csv
 from task.db.world import story_conclude
+from task.db.weight import read_weight
+
 
 class DBTaskDispatcher:
     def __init__(self, db_func):
         self.db_func = db_func
-        
+
         self.tasks = {
             "check_db_conn": check_db_conn,
             "create_image": create_image,
@@ -24,6 +26,7 @@ class DBTaskDispatcher:
             "create_service_account_from_csv": create_service_account_from_csv,
             "story_conclude": story_conclude,
             "split_paragraph": split_paragraph,
+            "read_weight": read_weight,
         }
 
     def dispatch(self, task_name, task_args):

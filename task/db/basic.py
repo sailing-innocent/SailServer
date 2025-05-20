@@ -6,6 +6,7 @@
 # @version 1.0
 # ---------------------------------
 
+
 def check_db_conn(db_func):
-    db = next(g_db_func())
-    return db is not None 
+    db = next(db_func())
+    return db is not None

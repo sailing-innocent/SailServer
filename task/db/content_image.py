@@ -7,8 +7,15 @@
 # ---------------------------------
 
 from utils.image import image_to_bytes, bytes_to_image
-from internal.model.content import create_image_impl, get_image_impl, delete_image_impl, ImageCreate, get_images_impl
-from PIL import Image 
+from internal.model.content import (
+    create_image_impl,
+    get_image_impl,
+    delete_image_impl,
+    ImageCreate,
+    get_images_impl,
+)
+from PIL import Image
+
 
 def create_image(db_func, img_path: str, img_name: str = "", debug: bool = False):
     db = next(db_func())
@@ -17,13 +24,9 @@ def create_image(db_func, img_path: str, img_name: str = "", debug: bool = False
     if img_name == "":
         img_name = img_path.split("\\")[-1].split(".")[0]
 
-    img_create = ImageCreate(
-        name=img_name,
-        data=img_data,
-        htime=0,
-        desp="Sample Image")
+    img_create = ImageCreate(name=img_name, data=img_data, htime=0, desp="Sample Image")
     image = create_image_impl(db, img_create)
-    
+
     # Read image from db
     print("Saved image to db, with id: ", image.id)
     id = image.id
@@ -45,6 +48,7 @@ def create_image(db_func, img_path: str, img_name: str = "", debug: bool = False
 
     return "Done"
 
+
 def read_image(db_func, id: int):
     db = next(db_func())
     image = get_image_impl(db, id)
@@ -60,6 +64,7 @@ def read_image(db_func, id: int):
     image.save("out.png")
     print("Saved image to out.png")
     return "Done"
+
 
 def read_images(db_func, out_dir: str):
     db = next(db_func())
