@@ -27,7 +27,11 @@ def update_notes(db_func):
 
     all_files = []
     failed_files = []
+    # line_limit = 2
     for line in lines:
+        # line_limit -= 1
+        # if line_limit < 0:
+        #     return
         line = line.strip()
         if not line:
             continue
