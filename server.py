@@ -11,6 +11,7 @@ import os
 import json
 from litestar import Litestar, Router, get, Request
 import logging
+from litestar.config.cors import CORSConfig
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -39,12 +40,12 @@ class SailServer:
         async def health_check(request: Request) -> dict[str, str]:
             return {"status": "ok"}
 
-        self.base_router = Router(path="/", route_handlers=[health_check])
+        self.base_router = Router(path="/", route_handlers=[])
         from internal.router.db import router as db_router
 
         self.api_router = Router(
             path=self.api_endpoint,
-            route_handlers=[db_router],
+            route_handlers=[db_router, health_check],
         )
 
         logging_config = LoggingConfig(
@@ -56,10 +57,12 @@ class SailServer:
             },
             log_exceptions="always",
         )
+        cors_config = CORSConfig(allow_origins=["*"], allow_methods=["*"])
         self.app = Litestar(
             route_handlers=[self.base_router, self.api_router],
             debug=self.debug,
             logging_config=logging_config,
+            cors_config=cors_config,
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
         )
