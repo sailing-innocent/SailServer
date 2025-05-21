@@ -34,9 +34,9 @@ class WeightData:
     The Weight Data
     """
 
-    id: int
     value: float
     htime: int
+    id: int = field(default=-1)
 
 
 @dataclass
@@ -45,7 +45,7 @@ class WeightRecordData:
     The Weight Data
     """
 
-    id: int
     value: float
     htime: int
+    id: int = field(default=-1)
     tag: str = field(default="daily")

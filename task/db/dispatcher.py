@@ -12,6 +12,7 @@ from task.db.content import split_paragraph
 from task.db.service_account import create_service_account_from_csv
 from task.db.world import story_conclude
 from task.db.weight import read_weight
+from task.db.vault import update_notes
 
 
 class DBTaskDispatcher:
@@ -27,6 +28,7 @@ class DBTaskDispatcher:
             "story_conclude": story_conclude,
             "split_paragraph": split_paragraph,
             "read_weight": read_weight,
+            "update_notes": update_notes,
         }
 
     def dispatch(self, task_name, task_args):

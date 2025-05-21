@@ -27,8 +27,10 @@ class ContentCreate(BaseModel):
     data: str
     size: int
 
+
 def content_from_create(create: ContentCreate):
     return Content(data=create.data, size=create.size)
+
 
 def create_content_impl(db, crt: ContentCreate):
     content = content_from_create(crt)
@@ -43,6 +45,7 @@ class ContentNodeCreate(BaseModel):
     content_id: int
     start: int
     offset: int
+
 
 def content_node_from_create(create: ContentNodeCreate):
     return ContentNode(
@@ -59,6 +62,7 @@ def create_content_node_impl(db, crt: ContentNodeCreate):
     db.add(content_node)
     db.commit()
     return content_node.id
+
 
 def create_content_with_node_impl(db, crt: ContentCreate):
     cid, sz = create_content_impl(db, crt)
@@ -77,8 +81,10 @@ class BookCreate(BaseModel):
     title: str
     author: str
 
+
 def book_from_create(create: BookCreate):
     return Book(title=create.title, author=create.author)
+
 
 def create_book_impl(db, crt: BookCreate):
     book = book_from_create(crt)
@@ -98,11 +104,13 @@ class BookInfo(BaseModel):
     id: int
     title: str
 
+
 class ChapterCreate(BaseModel):
     title: str
     book_id: int
     content_node_id: int
     order: int
+
 
 def chapter_from_create(create: ChapterCreate):
     return Chapter(
@@ -114,11 +122,13 @@ def chapter_from_create(create: ChapterCreate):
         order=create.order,
     )
 
+
 def create_chapter_impl(db, crt: ChapterCreate):
     chapter = chapter_from_create(crt)
     db.add(chapter)
     db.commit()
     return chapter.id
+
 
 class ChapterRead(BaseModel):
     id: int
@@ -127,11 +137,13 @@ class ChapterRead(BaseModel):
     content: str
     order: int
 
+
 class ChapterInfo(BaseModel):
-    title: str 
+    title: str
     book_id: int
     content_node_id: int
     order: int
+
 
 def info_from_chapter(chapter: Chapter):
     return ChapterInfo(
@@ -141,20 +153,25 @@ def info_from_chapter(chapter: Chapter):
         order=chapter.order,
     )
 
+
 def get_chapter_info_impl(db, chapter_id: int):
     chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
     if chapter is None:
         return None
     return info_from_chapter(chapter)
 
+
 def get_chapter_info_by_book_impl(db, book_id: int, order: int = -1):
     if order == -1:
         chapters = db.query(Chapter).filter(Chapter.book_id == book_id).all()
     else:
-        chapters = db.query(Chapter).filter(
-            Chapter.book_id == book_id, Chapter.order == order
-        ).all()
+        chapters = (
+            db.query(Chapter)
+            .filter(Chapter.book_id == book_id, Chapter.order == order)
+            .all()
+        )
     return [info_from_chapter(chapter) for chapter in chapters]
+
 
 def create_chapter_from_parser(db, chapter: BPChapter, book_id, order):
     content_crt = ContentCreate(data=chapter.content, size=len(chapter.content))
@@ -204,6 +221,7 @@ def read_chapter_impl(db, chapter_id: int):
         order=chapter.order,
     )
 
+
 def read_book_impl(db, book_id: int):
     book = db.query(Book).filter(Book.id == book_id).first()
     if book is None:
@@ -226,20 +244,24 @@ def read_books_info_impl(db, skip: int, limit: int):
     books = db.query(Book).order_by(Book.id).offset(skip).limit(limit).all()
     return [BookInfo(id=book.id, title=book.title) for book in books]
 
+
 class ParagraphTreeCreate(BaseModel):
     from_content_node_id: int
     to_content_node_id: int
+
 
 class ParagraphTreeRead(BaseModel):
     id: int
     from_content_node_id: int
     to_content_node_id: int
 
+
 def paragraph_tree_from_create(create: ParagraphTreeCreate):
     return ParagraphTree(
         from_content_node_id=create.from_content_node_id,
         to_content_node_id=create.to_content_node_id,
     )
+
 
 def read_from_paragraph_tree(tree: ParagraphTree):
     return ParagraphTreeRead(
@@ -248,11 +270,13 @@ def read_from_paragraph_tree(tree: ParagraphTree):
         to_content_node_id=tree.to_content_node_id,
     )
 
+
 def create_paragraph_tree_impl(db, tree_create: ParagraphTreeCreate):
     tree = paragraph_tree_from_create(tree_create)
     db.add(tree)
     db.commit()
     return read_from_paragraph_tree(tree)
+
 
 def get_paragraph_tree_impl(db, tree_id: int):
     tree = db.query(ParagraphTree).filter(ParagraphTree.id == tree_id).first()
@@ -260,11 +284,13 @@ def get_paragraph_tree_impl(db, tree_id: int):
         return None
     return read_from_paragraph_tree(tree)
 
+
 # ----------------------------------------
 # Image Resources
 # ----------------------------------------
 
 from internal.data.content import DBImage
+
 
 class ImageCreate(BaseModel):
     name: str
@@ -272,12 +298,14 @@ class ImageCreate(BaseModel):
     htime: int
     desp: str
 
+
 class ImageRead(BaseModel):
     id: int
     name: str
     data: bytes
     htime: int
     desp: str
+
 
 def image_from_create(create: ImageCreate):
     return DBImage(
@@ -287,6 +315,7 @@ def image_from_create(create: ImageCreate):
         desp=create.desp,
     )
 
+
 def image_from_read(read: ImageRead):
     return DBImage(
         id=read.id,
@@ -295,6 +324,7 @@ def image_from_read(read: ImageRead):
         htime=read.htime,
         desp=read.desp,
     )
+
 
 def read_from_image(image: DBImage, no_data: bool = False):
     data = image.data if not no_data else None
@@ -306,17 +336,20 @@ def read_from_image(image: DBImage, no_data: bool = False):
         desp=image.desp,
     )
 
+
 def create_image_impl(db, image_create: ImageCreate):
     image = image_from_create(image_create)
     db.add(image)
     db.commit()
     return read_from_image(image)
 
+
 def get_image_impl(db, image_id: int, no_data: bool = False):
     image = db.query(DBImage).filter(DBImage.id == image_id).first()
     if image is None:
         return None
     return read_from_image(image, no_data)
+
 
 def update_image_impl(db, image_id: int, image_update: ImageCreate):
     image = db.query(DBImage).filter(DBImage.id == image_id).first()
@@ -333,6 +366,7 @@ def update_image_impl(db, image_id: int, image_update: ImageCreate):
     db.commit()
     return read_from_image(image)
 
+
 def delete_image_impl(db, image_id: int):
     image = db.query(DBImage).filter(DBImage.id == image_id).first()
     if image is None:
@@ -340,6 +374,7 @@ def delete_image_impl(db, image_id: int):
     db.delete(image)
     db.commit()
     return read_from_image(image)
+
 
 def get_images_impl(db, skip: int = 0, limit: int = 0, no_data: bool = False):
     query = db.query(DBImage).order_by(DBImage.id)

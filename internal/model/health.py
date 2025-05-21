@@ -6,23 +6,11 @@
 # @version 1.0
 # ---------------------------------
 
-from pydantic import BaseModel
-from internal.data.health import Weight, WeightRecord, WeightData
+from internal.data.health import Weight, WeightRecord, WeightData, WeightRecordData
 import time
 
 
-class WeightCreate(BaseModel):
-    value: str
-    htime: int
-
-
-class WeightRead(BaseModel):
-    id: int
-    value: str
-    htime: int
-
-
-def weight_from_create(create: WeightCreate):
+def weight_from_create(create: WeightData):
     return Weight(
         value=create.value,
         htime=create.htime,
@@ -30,14 +18,14 @@ def weight_from_create(create: WeightCreate):
 
 
 def read_from_weight(weight: Weight):
-    return WeightRead(
+    return WeightData(
         id=weight.id,
         value=weight.value,
         htime=weight.htime,
     )
 
 
-def create_weight_impl(db, weight_create: WeightCreate):
+def create_weight_impl(db, weight_create: WeightData):
     # if htime is None, use current time
     if weight_create.htime == 0:
         weight_create.htime = int(time.time())
@@ -85,20 +73,7 @@ def delete_weight_impl(db, id=None):
     db.commit()
 
 
-class WeightRecordCreate(BaseModel):
-    value: str
-    htime: int
-    tag: str
-
-
-class WeightRecordRead(BaseModel):
-    id: int
-    value: str
-    htime: int
-    tag: str
-
-
-def weight_record_from_create(create: WeightRecordCreate):
+def weight_record_from_create(create: WeightRecordData):
     return WeightRecord(
         value=create.value,
         htime=create.htime,
@@ -107,7 +82,7 @@ def weight_record_from_create(create: WeightRecordCreate):
 
 
 def read_from_weight_record(weight: WeightRecord):
-    return WeightRecordRead(
+    return WeightRecordData(
         id=weight.id,
         value=weight.value,
         htime=weight.htime,
@@ -115,7 +90,7 @@ def read_from_weight_record(weight: WeightRecord):
     )
 
 
-def create_weight_record_impl(db, weight_create: WeightRecordCreate):
+def create_weight_record_impl(db, weight_create: WeightRecordData):
     # if htime is None, use current time
     if weight_create.htime == 0:
         weight_create.htime = int(time.time())

@@ -8,11 +8,11 @@
 
 from internal.model.health import (
     read_weights_impl,
-    WeightRecordCreate,
     read_weight_record_impl,
     update_weight_record_impl,
     create_weight_record_impl,
 )
+from internal.data.health import WeightData, WeightRecordData
 import logging
 
 logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ def read_weight(db_func):
     # post-process
 
     wrs = [
-        WeightRecordCreate(
+        WeightRecordData(
             value=str(round(res[i], 2)),
             htime=time_reqs[i],
             tag="daily,"
@@ -102,7 +102,7 @@ def read_weight(db_func):
             update_weight_record_impl(
                 db,
                 weight_record.id,
-                WeightRecordCreate(
+                WeightRecordData(
                     value=wr.value,
                     htime=wr.htime,
                     tag=wr.tag,

@@ -12,6 +12,7 @@ import json
 from litestar import Litestar, Router, get, Request
 import logging
 from litestar.config.cors import CORSConfig
+import argparse
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -22,7 +23,7 @@ from litestar.logging import LoggingConfig
 
 from utils.env import read_env
 
-read_env("prod")
+read_env("dev")
 
 
 class SailServer:
