@@ -208,6 +208,7 @@ def clear_invalid_trnasaction_impl(db):
 def update_transaction_impl(
     db, transaction_id: int, transaction_update: TransactionData
 ):
+    # logger.info("Get Transaction Update: %s", transaction_update)
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if transaction is None:
         return None

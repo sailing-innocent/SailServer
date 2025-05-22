@@ -179,7 +179,7 @@ class AccountController(Controller):
 
 
 class TransactionDataWriteDTO(DataclassDTO[TransactionData]):
-    config = DTOConfig(exclude={"id", "prev_value", "state", "htime", "ctime", "mtime"})
+    config = DTOConfig(exclude={"id", "prev_value", "state", "ctime", "mtime"})
 
 
 class TransactionDataReadDTO(DataclassDTO[TransactionData]):
