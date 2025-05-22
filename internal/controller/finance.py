@@ -171,6 +171,7 @@ class AccountController(Controller):
         db = next(router_dependency)
         account = delete_account_impl(db, account_id)
         request.logger.info(f"Delete account: {account}")
+        return None
 
 
 # -------------
@@ -276,3 +277,4 @@ class TransactionController(Controller):
         db = next(router_dependency)
         transaction = delete_transaction_impl(db, transaction_id)
         request.logger.info(f"Delete transaction: {transaction}")
+        return None

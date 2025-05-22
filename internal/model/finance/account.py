@@ -65,11 +65,11 @@ def read_account_impl(db, account_id: int):
 
 def delete_account_impl(db, account_id: int = None):
     if account_id is None:
-        # db.query(Account).delete()
         return None
     else:
         db.query(Account).filter(Account.id == account_id).delete()
     db.commit()
+    return None
 
 
 # update account balance via transaction
