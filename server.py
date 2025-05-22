@@ -24,7 +24,7 @@ from litestar.logging import LoggingConfig
 
 from utils.env import read_env
 
-read_env("dev")
+read_env("prod")
 
 from internal.exception_handlers import exception_handlers
 
