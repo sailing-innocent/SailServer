@@ -68,8 +68,8 @@ class Account(ORMBase):
 
 @dataclass
 class AccountData:
-    name: str
     id: int = field(default=-1)
+    name: str = field(default="")
     description: str = field(default="")
     balance: str = field(default=str(0.0))
     state: int = field(default_factory=lambda: AccountState(0).value)
@@ -131,8 +131,9 @@ class TransactionData:
     from_acc_id: int
     to_acc_id: int
     value: str
-    prev_value: str
+
     id: int = field(default=-1)
+    prev_value: str = field(default="0.0")
     description: str = field(default="")
     tags: str = field(default="")
     state: int = field(default_factory=lambda: TransactionState(0).value)

@@ -17,7 +17,9 @@ from internal.model.finance.account import (
     read_account_impl,
     read_accounts_impl,
     create_account_impl,
-    # update_account_impl,
+    update_account_balance_impl,
+    recalc_account_balance_impl,
+    fix_account_balance_impl,
     delete_account_impl,
 )
 
@@ -102,24 +104,59 @@ class AccountController(Controller):
 
         return account
 
-    # @put("/{account_id:int}")
-    # async def update_account(
-    #     self,
-    #     account_id: int,
-    #     data: AccountData,
-    #     request: Request,
-    #     router_dependency: Generator[Session, None, None],
-    # ) -> AccountData:
-    #     """
-    #     Update the account data.
-    #     """
-    #     db = next(router_dependency)
-    #     account = update_account_impl(db, account_id, data)
-    #     request.logger.info(f"Update account: {account}")
-    #     if account is None:
-    #         return None
+    @get("/update_balance/{account_id:int}")
+    async def update_account_balance(
+        self,
+        account_id: int,
+        router_dependency: Generator[Session, None, None],
+        request: Request,
+    ) -> AccountData:
+        """
+        Update the account balance.
+        """
+        db = next(router_dependency)
+        account = update_account_balance_impl(db, account_id)
+        request.logger.info(f"Update account balance: {account}")
+        if account is None:
+            return None
 
-    #     return account
+        return account
+
+    @get("/recalc_balance/{account_id:int}")
+    async def recalc_account_balance(
+        self,
+        account_id: int,
+        router_dependency: Generator[Session, None, None],
+        request: Request,
+    ) -> AccountData:
+        """
+        Recalculate the account balance.
+        """
+        db = next(router_dependency)
+        account = recalc_account_balance_impl(db, account_id)
+        request.logger.info(f"Recalculate account balance: {account}")
+        if account is None:
+            return None
+
+        return account
+
+    @post("/fix_balance")
+    async def fix_account_balance(
+        self,
+        data: AccountData,
+        request: Request,
+        router_dependency: Generator[Session, None, None],
+    ) -> AccountData:
+        """
+        Fix the account balance.
+        """
+        db = next(router_dependency)
+        account = fix_account_balance_impl(db, data)
+        request.logger.info(f"Fix account balance: {account}")
+        if account is None:
+            return None
+
+        return account
 
     @delete("/{account_id:int}")
     async def delete_account(
