@@ -10,6 +10,7 @@ import asyncio
 import os
 import json
 from litestar import Litestar, Router, get, Request
+
 import logging
 from litestar.config.cors import CORSConfig
 import argparse
@@ -24,6 +25,8 @@ from litestar.logging import LoggingConfig
 from utils.env import read_env
 
 read_env("dev")
+
+from internal.exception_handlers import exception_handlers
 
 
 class SailServer:
@@ -42,11 +45,16 @@ class SailServer:
             return {"status": "ok"}
 
         self.base_router = Router(path="/", route_handlers=[])
-        from internal.router.db import router as db_router
+        from internal.router.health import router as health_router
+        from internal.router.finance import router as finance_router
 
         self.api_router = Router(
             path=self.api_endpoint,
-            route_handlers=[db_router, health_check],
+            route_handlers=[
+                health_check,
+                health_router,
+                finance_router,
+            ],
         )
 
         logging_config = LoggingConfig(
@@ -64,6 +72,7 @@ class SailServer:
             debug=self.debug,
             logging_config=logging_config,
             cors_config=cors_config,
+            exception_handlers=exception_handlers,
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
         )

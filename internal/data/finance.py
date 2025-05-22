@@ -13,10 +13,15 @@ import time
 
 from utils.state import StateBits
 from enum import Enum
+from dataclasses import dataclass, field
 
 __all__ = [
     "Account",
+    "AccountState",
+    "AccountData",
     "Transaction",
+    "TransactionData",
+    "TransactionState",
     "_acc",
     "_acc_inv",
     "_htime",
@@ -59,6 +64,17 @@ class Account(ORMBase):
         back_populates="from_acc",
         primaryjoin="Account.id==Transaction.from_acc_id",
     )
+
+
+@dataclass
+class AccountData:
+    name: str
+    id: int = field(default=-1)
+    description: str = field(default="")
+    balance: str = field(default=str(0.0))
+    state: int = field(default_factory=lambda: AccountState(0).value)
+    ctime: int = field(default_factory=lambda: int(time.time()))
+    mtime: int = field(default_factory=lambda: int(time.time()))
 
 
 class AccountState(StateBits):
@@ -108,6 +124,21 @@ class Transaction(ORMBase):
     htime = Column(Integer)  # happen time
     ctime = Column(Integer)
     mtime = Column(Integer)
+
+
+@dataclass
+class TransactionData:
+    from_acc_id: int
+    to_acc_id: int
+    value: str
+    prev_value: str
+    id: int = field(default=-1)
+    description: str = field(default="")
+    tags: str = field(default="")
+    state: int = field(default_factory=lambda: TransactionState(0).value)
+    htime: int = field(default_factory=lambda: int(time.time()))
+    ctime: int = field(default_factory=lambda: int(time.time()))
+    mtime: int = field(default_factory=lambda: int(time.time()))
 
 
 class TransactionState(StateBits):

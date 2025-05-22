@@ -79,6 +79,10 @@ class Database:
 g_db_func = Database.get_instance().get_db
 
 
+async def get_db_dependency():
+    return g_db_func()
+
+
 def db_session(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

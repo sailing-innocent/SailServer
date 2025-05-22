@@ -1,131 +1,31 @@
-# -*- coding: utf-8 -*-
-# @file finance.py
-# @brief The Finanace Model
-# @author sailing-innocent
-# @date 2025-01-30
-# @version 1.0
-# ---------------------------------
-
-from pydantic import BaseModel
-from internal.data.finance import Account, Transaction, AccountState, TransactionState
+from internal.data.finance import (
+    Account,
+    Transaction,
+    AccountState,
+    TransactionData,
+    AccountData,
+    TransactionState,
+)
 from internal.data.finance import _acc, _acc_inv, _htime
+from internal.model.finance.account import read_from_account
 from utils.money import Money
 
 import time
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def clean_all_impl(db):
     db.query(Transaction).delete()
-    db.query(Account).delete()
     db.commit()
-
-
-# -----------------------------------------
-# Account
-# -----------------------------------------
-
-
-class AccountFixtureCreate(BaseModel):
-    id: int
-    balance: str
-
-
-class AccountCreate(BaseModel):
-    name: str
-
-
-class AccountRead(BaseModel):
-    id: int
-    name: str
-    description: str
-    balance: str
-    state: int
-    mtime: int
-
-
-def account_from_create(create: AccountCreate):
-    init_state = AccountState(0)
-    return Account(
-        name=create.name,
-        description="",
-        balance=str(0.0),
-        state=init_state.value,
-        ctime=int(time.time()),
-        mtime=int(time.time()),
-    )
-
-
-def read_from_account(account: Account):
-    return AccountRead(
-        id=account.id,
-        name=account.name,
-        description=account.description,
-        balance=account.balance,
-        state=account.state,
-        mtime=account.mtime,
-    )
-
-
-def create_account_impl(db, account_create: AccountCreate):
-    account = account_from_create(account_create)
-    db.add(account)
-    db.commit()
-    db.refresh(account)
-    return read_from_account(account)
-
-
-def read_accounts_impl(db, skip: int = 0, limit: int = 10):
-    accounts = db.query(Account).offset(skip).limit(limit).all()
-    res = [read_from_account(account) for account in accounts]
-    return res
-
-
-def read_account_impl(db, account_id: int):
-    account = db.query(Account).filter(Account.id == account_id).first()
-    res = read_from_account(account)
-    return res
-
-
-def delete_account_impl(db, account_id: int = None):
-    if account_id is None:
-        # db.query(Account).delete()
-        return None 
-    else:
-        db.query(Account).filter(Account.id == account_id).delete()
-    db.commit()
-
-
-# ------------------------------------------
-# Transaction
-# ------------------------------------------
-
-
-class TransactionCreate(BaseModel):
-    from_acc_id: int
-    to_acc_id: int
-    value: str  # decimal
-    description: str
-    tags: str
-    htime: int
-
-
-class TransactionRead(BaseModel):
-    id: int
-    from_acc_id: int
-    to_acc_id: int
-    value: str  # decimal
-    description: str
-    tags: str
-    state: int
-    htime: int
 
 
 def validate_account_exists(db, account_id: int) -> bool:
     return db.query(Account).filter(Account.id == account_id).first() is not None
 
 
-def trans_from_create(create: TransactionCreate):
+def trans_from_create(create: TransactionData):
     htime = _htime(create)
     init_state = TransactionState(0)
     from_acc_id = _acc(create.from_acc_id)
@@ -148,15 +48,18 @@ def read_from_trans(trans: Transaction):
     tags = ""
     if trans.tags is not None:
         tags = trans.tags
-    return TransactionRead(
+    return TransactionData(
         id=trans.id,
         from_acc_id=_acc_inv(trans.from_acc_id),
         to_acc_id=_acc_inv(trans.to_acc_id),
         value=trans.value,
+        prev_value=trans.prev_value,
         description=trans.description,
         tags=tags,
         state=trans.state,
         htime=trans.htime,
+        ctime=trans.ctime,
+        mtime=trans.mtime,
     )
 
 
@@ -199,7 +102,7 @@ def validate_transactions_impl(db):
     db.commit()
 
 
-def create_transaction_impl(db, transaction_create: TransactionCreate):
+def create_transaction_impl(db, transaction_create: TransactionData):
     transaction = trans_from_create(transaction_create)
     db.add(transaction)
     db.commit()
@@ -237,6 +140,7 @@ def read_transactions_by_label_impl(db, label: str, from_time: int, to_time: int
         .all()
     )
     return [read_from_trans(transaction) for transaction in transactions]
+
 
 def read_transactions_by_desp_impl(db, desp: str, from_time: int, to_time: int):
     transactions = (
@@ -278,7 +182,6 @@ def delete_transaction_impl(db, transaction_id: int = None):
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     state = TransactionState(transaction.state)
 
-
     if state.is_from_acc_valid():
         state.unset_from_acc_valid()
         state.set_from_acc_deprecated()
@@ -303,7 +206,7 @@ def clear_invalid_trnasaction_impl(db):
 
 
 def update_transaction_impl(
-    db, transaction_id: int, transaction_update: TransactionCreate
+    db, transaction_id: int, transaction_update: TransactionData
 ):
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if transaction is None:
@@ -322,7 +225,6 @@ def update_transaction_impl(
             # IF UPDATED, unset for later update
             state.unset_from_acc_updated()
         state.set_from_acc_changed()
-
 
     if state.is_to_acc_valid():
         if not state.is_to_acc_updated():
@@ -351,7 +253,7 @@ def update_transaction_impl(
 
 
 # recalc account balance
-def recalc_account_balance_impl(db, account_id: int) -> AccountRead:
+def recalc_account_balance_impl(db, account_id: int) -> AccountData:
     account = db.query(Account).filter(Account.id == account_id).first()
     if account is None:
         return None
@@ -365,7 +267,7 @@ def recalc_account_balance_impl(db, account_id: int) -> AccountRead:
                 continue
             else:
                 state.set_to_acc_valid()
-        
+
         balance_value += Money(in_trans.value)
         state.set_to_acc_updated()
         state.unset_to_acc_changed()
@@ -391,7 +293,7 @@ def recalc_account_balance_impl(db, account_id: int) -> AccountRead:
 
 
 # update account balance via transaction
-def update_account_balance_impl(db, account_id: int) -> AccountRead:
+def update_account_balance_impl(db, account_id: int) -> AccountData:
     account = db.query(Account).filter(Account.id == account_id).first()
     if account is None:
         return None
@@ -438,7 +340,7 @@ def update_account_balance_impl(db, account_id: int) -> AccountRead:
     return read_from_account(account)
 
 
-def fix_account_balance_impl(db, fix: AccountFixtureCreate) -> AccountRead:
+def fix_account_balance_impl(db, fix: AccountData) -> AccountData:
     logging.info(f"fixing account balance for account {fix.id}")
     id = fix.id
     balance = Money(fix.balance)
@@ -450,11 +352,11 @@ def fix_account_balance_impl(db, fix: AccountFixtureCreate) -> AccountRead:
     curr_balance = Money(account.balance)
     # fix balance
     to_fix = balance - curr_balance
-    print(f"fixing balance for account {id} by {to_fix.value_str}")
+    logger.info(f"fixing balance for account {id} by {to_fix.value_str}")
     # new transaction
     create_transaction_impl(
         db,
-        TransactionCreate(
+        TransactionData(
             from_acc_id=-1,
             to_acc_id=id,
             value=to_fix.value_str,

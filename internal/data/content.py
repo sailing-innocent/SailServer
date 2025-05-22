@@ -21,6 +21,25 @@ class Book(ORMBase):
     title = Column(String)
 
 
+@dataclass
+class BookData:
+    """
+    The Book Data
+    """
+
+    author: str
+    title: str
+    id: int = field(default=-1)
+
+
+@dataclass
+class BookChaptersData:
+    id: int
+    title: str
+    author: str
+    chapters: list[int]
+
+
 class Chapter(ORMBase):
     __tablename__ = "chapter"
     id = Column(Integer, primary_key=True)
@@ -91,7 +110,20 @@ class DBImage(ORMBase):
     desp = Column(String(255), nullable=True)  # image description
 
 
-# Vault Control
+@dataclass
+class DBImageData:
+    id: int
+    name: str
+    data: bytes
+    htime: int
+    desp: str = field(default="")
+
+
+# --------------
+# Vault Note
+# --------------
+
+
 class VaultNote(ORMBase):
     __tablename__ = "vault_note"
     id = Column(Integer, primary_key=True)
