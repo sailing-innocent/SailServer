@@ -20,6 +20,11 @@ dependencies = [
     "uvicorn>=0.34.2",
 ]
 
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+
 [tool.pytest.ini_options]
 python_paths=[
     "."

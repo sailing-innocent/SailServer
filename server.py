@@ -36,6 +36,8 @@ class SailServer:
         self.app = None
         self.router = None
         self.api_endpoint = os.environ.get("API_ENDPOINT", "/api")
+        self.site_dist = os.environ.get("SITE_DIST", "site_dist")
+        self.page_alias = ["/health", "/asset", "/playground", "/content", "/project"]
         self.api_router = None
         self.debug = os.environ.get("DEV_MODE", "false").lower() == "true"
 
@@ -44,7 +46,32 @@ class SailServer:
         async def health_check(request: Request) -> dict[str, str]:
             return {"status": "ok"}
 
-        self.base_router = Router(path="/", route_handlers=[])
+        # redirect all self.page_alias to root
+        for alias in self.page_alias:
+
+            @get(alias)
+            async def redirect_to_root(request: Request) -> dict[str, str]:
+                return {"status": "redirect", "location": "/"}
+
+        # static file in self.site_dist
+        @get("/static/{path:path}")
+        async def serve_static(request: Request) -> dict[str, str]:
+            path = request.path_params["path"]
+            file_path = os.path.join(self.site_dist, path)
+            if os.path.exists(file_path):
+                with open(file_path, "r") as f:
+                    content = f.read()
+                return {"status": "ok", "content": content}
+            else:
+                return {"status": "error", "message": "File not found"}
+
+        self.base_router = Router(
+            path="/",
+            route_handlers=[
+                redirect_to_root,
+                serve_static,
+            ],
+        )
         from internal.router.health import router as health_router
         from internal.router.finance import router as finance_router
 
@@ -52,6 +79,7 @@ class SailServer:
             path=self.api_endpoint,
             route_handlers=[
                 health_check,
+                self.base_router,
                 health_router,
                 finance_router,
             ],
@@ -67,6 +95,7 @@ class SailServer:
             log_exceptions="always",
         )
         cors_config = CORSConfig(allow_origins=["*"], allow_methods=["*"])
+
         self.app = Litestar(
             route_handlers=[self.base_router, self.api_router],
             debug=self.debug,
