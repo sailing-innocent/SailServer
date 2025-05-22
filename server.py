@@ -27,7 +27,7 @@ from utils.env import read_env
 read_env("prod")
 
 from internal.exception_handlers import exception_handlers
-
+from litestar.static_files import create_static_files_router
 
 class SailServer:
     def __init__(self, host, port):
@@ -53,23 +53,17 @@ class SailServer:
             async def redirect_to_root(request: Request) -> dict[str, str]:
                 return {"status": "redirect", "location": "/"}
 
-        # static file in self.site_dist
-        @get("/static/{path:path}")
-        async def serve_static(request: Request) -> dict[str, str]:
-            path = request.path_params["path"]
-            file_path = os.path.join(self.site_dist, path)
-            if os.path.exists(file_path):
-                with open(file_path, "r") as f:
-                    content = f.read()
-                return {"status": "ok", "content": content}
-            else:
-                return {"status": "error", "message": "File not found"}
 
         self.base_router = Router(
             path="/",
             route_handlers=[
                 redirect_to_root,
-                serve_static,
+                create_static_files_router(
+                    directories=[self.site_dist],
+                    path="/",
+                    html_mode=True,
+                    include_in_schema=False,
+                ),
             ],
         )
         from internal.router.health import router as health_router
