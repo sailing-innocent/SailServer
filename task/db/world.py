@@ -7,7 +7,7 @@
 # ---------------------------------
 
 import csv
-from internal.model.content import get_chapter_info_by_book_impl
+from internal.model.content.chapter import get_chapter_info_by_book_impl
 from internal.model.world import (
     StoryCreate,
     create_story_impl,
