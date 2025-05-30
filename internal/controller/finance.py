@@ -42,6 +42,10 @@ class AccountDataWriteDTO(DataclassDTO[AccountData]):
     config = DTOConfig(exclude={"id", "balance", "state", "ctime", "mtime"})
 
 
+class AccountDataUpdateDTO(DataclassDTO[AccountData]):
+    config = DTOConfig(exclude={"state", "ctime", "mtime", "prev_value"})
+
+
 class AccountDataReadDTO(DataclassDTO[AccountData]):
     config = DTOConfig(exclude={"ctime", "state"})
 
@@ -104,7 +108,7 @@ class AccountController(Controller):
 
         return account
 
-    @get("/update_balance/{account_id:int}")
+    @get("/update_balance/{account_id:int}", dto=AccountDataUpdateDTO)
     async def update_account_balance(
         self,
         account_id: int,
@@ -140,7 +144,7 @@ class AccountController(Controller):
 
         return account
 
-    @post("/fix_balance")
+    @post("/fix_balance", dto=AccountDataUpdateDTO)
     async def fix_account_balance(
         self,
         data: AccountData,

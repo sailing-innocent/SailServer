@@ -97,19 +97,24 @@ def update_account_balance_impl(db, account_id: int) -> AccountData:
 
     for out_trans in account.out_transactions:
         state = TransactionState(out_trans.state)
-        if state.is_from_acc_valid():
-            if not state.is_from_acc_updated():
-                balance_value -= Money(out_trans.value)
-                state.set_from_acc_updated()
-            if state.is_from_acc_changed():
-                balance_value += Money(out_trans.prev_value)
-            state.unset_from_acc_changed()
-        else:
-            if state.is_from_acc_deprecated():
-                balance_value += Money(out_trans.value)
-                state.unset_from_acc_deprecated()
-                # finally set to 0
-
+        try:
+            if state.is_from_acc_valid():
+                if not state.is_from_acc_updated():
+                    logging.info(f"OutTransaction Value: {out_trans.value}")
+                    balance_value -= Money(out_trans.value)
+                    state.set_from_acc_updated()
+                if state.is_from_acc_changed():
+                    balance_value += Money(out_trans.prev_value)
+                state.unset_from_acc_changed()
+            else:
+                if state.is_from_acc_deprecated():
+                    balance_value += Money(out_trans.value)
+                    state.unset_from_acc_deprecated()
+                    # finally set to 0
+        except Exception as e:
+            logger.error(f"Error updating account balance: {e}")
+            logger.error(f"proceeding with out_trans: {out_trans}")
+            return None
         out_trans.state = state.value
 
     account.balance = balance_value.value_str

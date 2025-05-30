@@ -9,6 +9,7 @@
 from decimal import Decimal
 import logging
 
+
 class TransCurrencyRate:
     _from_currency = "CNY"
     _to_currency = "USD"
@@ -46,6 +47,7 @@ class Money:
     def __init__(self, value: str = "0.0", currency: str = "CNY"):
         if currency not in Money._supported_currency:
             raise ValueError(f"Unsupported currency: {currency}")
+        # print(value)
         self.value = Decimal(value)
         self.currency = currency
 
@@ -96,5 +98,6 @@ class Money:
             logging.error(f"Currency mismatch: {self.currency} != {other.currency}")
             return False
         return self.value == other.value
+
     def __str__(self):
         return f"{self.value} {self.currency}"

@@ -26,7 +26,7 @@ from litestar.logging import LoggingConfig
 
 from utils.env import read_env
 
-read_env("prod")
+read_env("debug")
 
 from internal.exception_handlers import exception_handlers
 from litestar.static_files import create_static_files_router
