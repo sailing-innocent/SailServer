@@ -77,6 +77,7 @@ class SailServer:
         )
         from internal.router.health import router as health_router
         from internal.router.finance import router as finance_router
+        from internal.router.content import router as content_router
 
         self.api_router = Router(
             path=self.api_endpoint,
@@ -85,6 +86,7 @@ class SailServer:
                 self.base_router,
                 health_router,
                 finance_router,
+                content_router,
             ],
         )
 

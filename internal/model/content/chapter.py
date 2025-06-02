@@ -8,72 +8,27 @@
 
 from pydantic import BaseModel
 
-from internal.data.content import Book, Chapter, ContentNode, Content, ParagraphTree
+from internal.data.content import (
+    Book,
+    Chapter,
+    ContentNode,
+    Content,
+    ParagraphTree,
+    ContentData,
+)
+from internal.model.content.content import (
+    create_content_with_node_impl,
+    read_content_data_by_node_impl,
+)
 from utils.book_parser import BPChapter
 import time
 import logging
 
 
 def clean_all_impl(db):
-    db.query(Content).delete()
-    db.query(ContentNode).delete()
     db.query(Chapter).delete()
     db.query(Book).delete()
     db.commit()
-
-
-class ContentCreate(BaseModel):
-    data: str
-    size: int
-
-
-def content_from_create(create: ContentCreate):
-    return Content(data=create.data, size=create.size)
-
-
-def create_content_impl(db, crt: ContentCreate):
-    content = content_from_create(crt)
-    db.add(content)
-    db.commit()
-    return content.id, content.size
-
-
-class ContentNodeCreate(BaseModel):
-    raw_tags: str
-    tags: str
-    content_id: int
-    start: int
-    offset: int
-
-
-def content_node_from_create(create: ContentNodeCreate):
-    return ContentNode(
-        raw_tags=create.raw_tags,
-        tags=create.tags,
-        content_id=create.content_id,
-        start=create.start,
-        offset=create.offset,
-    )
-
-
-def create_content_node_impl(db, crt: ContentNodeCreate):
-    content_node = content_node_from_create(crt)
-    db.add(content_node)
-    db.commit()
-    return content_node.id
-
-
-def create_content_with_node_impl(db, crt: ContentCreate):
-    cid, sz = create_content_impl(db, crt)
-    # the auto binding full node
-    node_crt = ContentNodeCreate(
-        raw_tags="",
-        tags="",
-        content_id=cid,
-        start=0,
-        offset=sz,
-    )
-    return create_content_node_impl(db, node_crt)
 
 
 class ChapterCreate(BaseModel):
@@ -144,31 +99,17 @@ def get_chapter_info_by_book_impl(db, book_id: int, order: int = -1):
     return [info_from_chapter(chapter) for chapter in chapters]
 
 
-def read_content_by_node_impl(db, node_id: int):
-    node = db.query(ContentNode).filter(ContentNode.id == node_id).first()
-    if node is None:
-        return None
-    content = db.query(Content).filter(Content.id == node.content_id).first()
-    if content is None:
-        return None
-    if node.start + node.offset > content.size:
-        logging.error("ContentNode out of range")
-        return None
-
-    return content.data[node.start : node.start + node.offset]
-
-
 def read_chapter_impl(db, chapter_id: int):
     chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
     if chapter is None:
         return None
     # return read_from_chapter(chapter)
-    content = read_content_by_node_impl(db, chapter.content_node_id)
+    content_data = read_content_data_by_node_impl(db, chapter.content_node_id)
     return ChapterRead(
         id=chapter.id,
         title=chapter.title,
         book_id=chapter.book_id,
-        content=content,
+        content=content_data,
         order=chapter.order,
     )
 
@@ -214,7 +155,7 @@ def get_paragraph_tree_impl(db, tree_id: int):
 
 
 def create_chapter_from_parser(db, chapter: BPChapter, book_id, order):
-    content_crt = ContentCreate(data=chapter.content, size=len(chapter.content))
+    content_crt = ContentData(data=chapter.content, size=len(chapter.content))
     content_node_id = create_content_with_node_impl(db, content_crt)
     crt = ChapterCreate(
         title=chapter.title,

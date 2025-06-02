@@ -53,7 +53,19 @@ class Chapter(ORMBase):
     order = Column(Integer)  # order of the chapter in the book
 
 
-# 如果不想进行分段，可以直接从ContentNode查询到Content的id，然后通过Content的id查询到Content的内容，用start和offset来截取返回
+# The Real Content Storage
+class Content(ORMBase):
+    __tablename__ = "content"
+    id = Column(Integer, primary_key=True)
+    data = Column(String)
+    size = Column(Integer)
+    attached_nodes = relationship(
+        "ContentNode",
+        back_populates="content",
+        primaryjoin="Content.id==ContentNode.content_id",
+    )
+
+
 class ContentNode(ORMBase):
     __tablename__ = "content_node"
     id = Column(Integer, primary_key=True)
@@ -66,6 +78,27 @@ class ContentNode(ORMBase):
     tags = Column(String)  # tags, by system
     start = Column(Integer)
     offset = Column(Integer)
+
+
+@dataclass
+class ContentNodeData:
+    id: int = field(default=-1)
+    content_id: int = field(default=-1)
+    raw_tags: str = field(default="")
+    tags: str = field(default="")
+    start: int = field(default=0)
+    offset: int = field(default=0)
+
+
+@dataclass
+class ContentData:
+    """
+    The Content Data
+    """
+
+    id: int = field(default=-1)
+    data: str = field(default="")
+    size: int = field(default=0)
 
 
 # The LINKS between content-nodes
@@ -81,19 +114,6 @@ class ParagraphTree(ORMBase):
         Integer, ForeignKey("content_node.id")
     )  # root node attached
     data = Column(JSONB)  # json binary data
-
-
-# The Real Content Storage
-class Content(ORMBase):
-    __tablename__ = "content"
-    id = Column(Integer, primary_key=True)
-    data = Column(String)
-    size = Column(Integer)
-    attached_nodes = relationship(
-        "ContentNode",
-        back_populates="content",
-        primaryjoin="Content.id==ContentNode.content_id",
-    )
 
 
 # --------------
