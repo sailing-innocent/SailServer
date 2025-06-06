@@ -56,7 +56,10 @@ class SailServer:
             def create_redirect_function(path):
                 @get(path)
                 async def redirect_handler(request: Request) -> Redirect:
-                    return Redirect(path="/")
+                    return Redirect(
+                        path="/",
+                        query_params={**request.query_params, "path": path.lstrip("/")},
+                    )
 
                 return redirect_handler
 
