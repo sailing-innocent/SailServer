@@ -6,7 +6,7 @@
 # @version 1.0
 # ---------------------------------
 
-from internal.data.content import BookData, Book, BookChaptersData, Chapter
+from internal.data.content import BookData, Book, Chapter
 from utils.book_parser import BPBook, BPChapter
 import logging
 
@@ -46,7 +46,7 @@ def read_book_impl(db, book_id: int):
         .all()
     )
 
-    return BookChaptersData(
+    return BookData(
         id=book.id,
         title=book.title,
         author=book.author,

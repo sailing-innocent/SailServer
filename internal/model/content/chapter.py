@@ -7,6 +7,7 @@
 # ---------------------------------
 
 from pydantic import BaseModel
+from sqlalchemy import and_
 
 from internal.data.content import (
     Book,
@@ -15,6 +16,7 @@ from internal.data.content import (
     Content,
     ParagraphTree,
     ContentData,
+    ChapterData,
 )
 from internal.model.content.content import (
     create_content_with_node_impl,
@@ -31,14 +33,7 @@ def clean_all_impl(db):
     db.commit()
 
 
-class ChapterCreate(BaseModel):
-    title: str
-    book_id: int
-    content_node_id: int
-    order: int
-
-
-def chapter_from_create(create: ChapterCreate):
+def chapter_from_create(create: ChapterData):
     return Chapter(
         title=create.title,
         book_id=create.book_id,
@@ -49,30 +44,15 @@ def chapter_from_create(create: ChapterCreate):
     )
 
 
-def create_chapter_impl(db, crt: ChapterCreate):
+def create_chapter_impl(db, crt: ChapterData):
     chapter = chapter_from_create(crt)
     db.add(chapter)
     db.commit()
     return chapter.id
 
 
-class ChapterRead(BaseModel):
-    id: int
-    title: str
-    book_id: int
-    content: str
-    order: int
-
-
-class ChapterInfo(BaseModel):
-    title: str
-    book_id: int
-    content_node_id: int
-    order: int
-
-
 def info_from_chapter(chapter: Chapter):
-    return ChapterInfo(
+    return ChapterData(
         title=chapter.title,
         book_id=chapter.book_id,
         content_node_id=chapter.content_node_id,
@@ -105,12 +85,57 @@ def read_chapter_impl(db, chapter_id: int):
         return None
     # return read_from_chapter(chapter)
     content_data = read_content_data_by_node_impl(db, chapter.content_node_id)
-    return ChapterRead(
+    return ChapterData(
         id=chapter.id,
         title=chapter.title,
         book_id=chapter.book_id,
         content=content_data,
         order=chapter.order,
+    )
+
+
+def read_book_chapter_impl(db, book_id: int, chapter_order: int):
+    """
+    target SQL:
+    SELECT content_node.start, content_node.offset, content.data, content.size FROM chapter
+    INNER JOIN book ON chapter.book_id=book.id
+    INNER JOIN content_node ON content_node.id=chapter.content_node_id
+    INNER JOIN content ON content.id=content_node.content_id
+    WHERE book.id=1 AND chapter.order=13;
+    """
+    result = (
+        db.query(
+            Chapter.id,
+            Chapter.title,
+            Chapter.order,
+            ContentNode.start,
+            ContentNode.offset,
+            Content.data,
+            Content.size,
+        )
+        .join(Book, Chapter.book_id == Book.id)
+        .join(ContentNode, ContentNode.id == Chapter.content_node_id)
+        .join(Content, Content.id == ContentNode.content_id)
+        .filter(and_(Book.id == book_id, Chapter.order == chapter_order))
+        .first()
+    )
+
+    if result is None:
+        return None
+
+    # Extract content data based on start and offset
+    content_data = (
+        result.data[result.start : result.start + result.offset]
+        if result.start is not None and result.offset is not None
+        else result.data
+    )
+
+    return ChapterData(
+        id=result.id,
+        title=result.title,
+        book_id=book_id,
+        content=content_data,
+        order=result.order,
     )
 
 
@@ -157,7 +182,7 @@ def get_paragraph_tree_impl(db, tree_id: int):
 def create_chapter_from_parser(db, chapter: BPChapter, book_id, order):
     content_crt = ContentData(data=chapter.content, size=len(chapter.content))
     content_node_id = create_content_with_node_impl(db, content_crt)
-    crt = ChapterCreate(
+    crt = ChapterData(
         title=chapter.title,
         book_id=book_id,
         content_node_id=content_node_id,

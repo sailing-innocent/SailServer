@@ -8,7 +8,7 @@
 
 from task.db.basic import check_db_conn
 from task.db.content_image import create_image, read_image, read_images
-from task.db.content import split_paragraph
+from task.db.content import split_paragraph, read_book_chapter
 from task.db.service_account import create_service_account_from_csv
 from task.db.world import story_conclude
 from task.db.weight import read_weight
@@ -28,6 +28,7 @@ class DBTaskDispatcher:
             "create_service_account_from_csv": create_service_account_from_csv,
             "story_conclude": story_conclude,
             "split_paragraph": split_paragraph,
+            "read_book_chapter": read_book_chapter,
             "read_weight": read_weight,
             "update_notes": update_notes,
             "fix_account_balance": fix_account_balance,

@@ -30,14 +30,7 @@ class BookData:
     author: str
     title: str
     id: int = field(default=-1)
-
-
-@dataclass
-class BookChaptersData:
-    id: int
-    title: str
-    author: str
-    chapters: list[int]
+    chapters: list[int] = field(default_factory=list)  # list of chapter ids
 
 
 class Chapter(ORMBase):
@@ -51,6 +44,18 @@ class Chapter(ORMBase):
     ctime = Column(Integer)
     mtime = Column(Integer)
     order = Column(Integer)  # order of the chapter in the book
+
+
+@dataclass
+class ChapterData:
+    id: int = field(default=-1)
+    title: str = field(default="")
+    book_id: int = field(default=-1)
+    content_node_id: int = field(default=-1)
+    ctime: int = field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
+    mtime: int = field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
+    order: int = field(default=0)
+    content: str = field(default="")  # return content as string
 
 
 # The Real Content Storage
