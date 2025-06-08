@@ -9,7 +9,7 @@
 
 from litestar import Router
 from litestar.di import Provide
-from internal.controller.content import ContentController
+from internal.controller.content import ContentController, ChapterController
 from internal.db import get_db_dependency
 
 router = Router(
@@ -17,5 +17,6 @@ router = Router(
     dependencies={"router_dependency": Provide(get_db_dependency)},
     route_handlers=[
         ContentController,
+        ChapterController,
     ],
 )

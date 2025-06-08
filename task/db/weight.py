@@ -6,13 +6,8 @@
 # @version 1.0
 # ---------------------------------
 
-from internal.model.health import (
-    read_weights_impl,
-    read_weight_record_impl,
-    update_weight_record_impl,
-    create_weight_record_impl,
-)
-from internal.data.health import WeightData, WeightRecordData
+from internal.model.health import read_weights_impl
+from internal.data.health import WeightData
 import logging
 
 logger = logging.getLogger(__name__)
@@ -84,33 +79,33 @@ def read_weight(db_func):
 
     # post-process
 
-    wrs = [
-        WeightRecordData(
-            value=str(round(res[i], 2)),
-            htime=time_reqs[i],
-            tag="daily,"
-            + datetime.datetime.fromtimestamp(time_reqs[i]).strftime("%Y-%m-%d"),
-        )
-        for i in range(len(res))
-    ]
-    logger.info(f"Weight records: {wrs}")
-    for wr in wrs:
-        # search for the same tag
-        weight_record = read_weight_record_impl(db, _tag=wr.tag)
-        if weight_record is not None:
-            logger.info(f"Weight record {weight_record.id} already exists, updating...")
-            update_weight_record_impl(
-                db,
-                weight_record.id,
-                WeightRecordData(
-                    value=wr.value,
-                    htime=wr.htime,
-                    tag=wr.tag,
-                ),
-            )
-        else:
-            # create weight record
-            logger.info(f"Creating weight record: {wr}")
-            create_weight_record_impl(db, wr)
+    # wrs = [
+    #     WeightRecordData(
+    #         value=str(round(res[i], 2)),
+    #         htime=time_reqs[i],
+    #         tag="daily,"
+    #         + datetime.datetime.fromtimestamp(time_reqs[i]).strftime("%Y-%m-%d"),
+    #     )
+    #     for i in range(len(res))
+    # ]
+    # logger.info(f"Weight records: {wrs}")
+    # for wr in wrs:
+    #     # search for the same tag
+    #     weight_record = read_weight_record_impl(db, _tag=wr.tag)
+    #     if weight_record is not None:
+    #         logger.info(f"Weight record {weight_record.id} already exists, updating...")
+    #         update_weight_record_impl(
+    #             db,
+    #             weight_record.id,
+    #             WeightRecordData(
+    #                 value=wr.value,
+    #                 htime=wr.htime,
+    #                 tag=wr.tag,
+    #             ),
+    #         )
+    #     else:
+    #         # create weight record
+    #         logger.info(f"Creating weight record: {wr}")
+    #         create_weight_record_impl(db, wr)
 
     return "Done"

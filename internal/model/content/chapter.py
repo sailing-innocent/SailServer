@@ -79,7 +79,7 @@ def get_chapter_info_by_book_impl(db, book_id: int, order: int = -1):
     return [info_from_chapter(chapter) for chapter in chapters]
 
 
-def read_chapter_impl(db, chapter_id: int):
+def read_chapter_impl(db, chapter_id: int) -> ChapterData:
     chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
     if chapter is None:
         return None
@@ -94,7 +94,7 @@ def read_chapter_impl(db, chapter_id: int):
     )
 
 
-def read_book_chapter_impl(db, book_id: int, chapter_order: int):
+def read_book_chapter_impl(db, book_id: int, chapter_order: int) -> ChapterData:
     """
     target SQL:
     SELECT content_node.start, content_node.offset, content.data, content.size FROM chapter

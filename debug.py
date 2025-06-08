@@ -12,7 +12,7 @@ import os
 import argparse
 
 from internal.db import g_db_func
-from task.db.dispatcher import DBTaskDispatcher
+from task.db._dispatcher import DBTaskDispatcher
 import logging
 
 logger = logging.getLogger(__name__)

@@ -192,7 +192,7 @@ class MarketPriceRecordData:
 class Purchase(ORMBase):
     __tablename__ = "purchase"
     id = Column(Integer, primary_key=True)
-    transaction_id = Column(Integer, ForeignKey("transaction.id"), nullable=False)
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
     transaction = relationship("Transaction", backref="payments")
     item_amount = Column(Integer, nullable=False)  # purchase amount
     market_price_record_id = Column(
