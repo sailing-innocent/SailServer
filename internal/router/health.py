@@ -8,7 +8,7 @@
 
 from litestar import Router
 from litestar.di import Provide
-from internal.controller.health import WeightController, WeightRecordController
+from internal.controller.health import WeightController
 from internal.db import get_db_dependency
 
 
@@ -17,6 +17,5 @@ router = Router(
     dependencies={"router_dependency": Provide(get_db_dependency)},
     route_handlers=[
         WeightController,
-        WeightRecordController,
     ],
 )

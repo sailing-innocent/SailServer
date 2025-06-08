@@ -16,11 +16,10 @@ import functools
 from internal.data.orm import ORMBase
 
 # import all ORM models
-import internal.data.project
 import internal.data.health
 import internal.data.content
 import internal.data.finance
-import internal.data.info
+import internal.data.life
 import internal.data.world
 import os
 

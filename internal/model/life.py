@@ -7,7 +7,7 @@
 # ---------------------------------
 
 from pydantic import BaseModel
-from internal.data.info import Accommodation, Asset, ClothState, ServiceAccount
+from internal.data.life import Accommodation, Asset, ClothState, ServiceAccount
 
 
 def clean_all_impl(db):

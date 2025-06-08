@@ -106,11 +106,6 @@ class ContentData:
     size: int = field(default=0)
 
 
-# The LINKS between content-nodes
-# 想要进行分段操作的话，通过Chapter查询到ContentNode的id，然后在ParagraphTree中查询所有分段ID, 迭代出所有的分段
-# 通过分段ID查询到ContentNode的id, 然后通过ContentNode的id查询到Content的id, 然后通过Content的id查询到Content的内容
-
-
 class ParagraphTree(ORMBase):
     __tablename__ = "paragraph_tree"
     __table_args__ = {"extend_existing": True}

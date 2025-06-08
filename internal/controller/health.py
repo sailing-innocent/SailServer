@@ -10,7 +10,7 @@ from litestar.dto import DataclassDTO
 from litestar.dto.config import DTOConfig
 from litestar import Controller, delete, get, post, put, Request
 
-from internal.data.health import WeightData, WeightRecordData
+from internal.data.health import WeightData
 from internal.model.health import (
     read_weight_impl,
     read_weights_impl,
@@ -85,30 +85,3 @@ class WeightController(Controller):
             return None
 
         return weight
-
-
-class WeightRecordDataWriteDTO(DataclassDTO[WeightRecordData]):
-    config = DTOConfig(exclude={"id"})
-
-
-class WeightRecordDataReadDTO(DataclassDTO[WeightRecordData]): ...
-
-
-class WeightRecordController(Controller):
-    dto = WeightRecordDataWriteDTO
-    read_dto = WeightRecordDataReadDTO
-    path = "/weight_record"
-
-    @get("/{weight_record_id:int}")
-    async def get_weight_record(
-        self, weight_record_id: int, router_dependency: Generator[Session, None, None]
-    ) -> WeightRecordData:
-        """
-        Get the weight record data.
-        """
-        db = next(router_dependency)
-        weight_record = read_weight_impl(db, weight_record_id)
-        if weight_record is None:
-            return None
-
-        return weight_record
