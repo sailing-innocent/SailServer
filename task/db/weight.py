@@ -21,15 +21,79 @@ import numpy as np
 from scipy.signal import savgol_filter
 import datetime
 from utils.sampler import TimeValueSampler
+from utils.stat.regression import linear_regression_1d
+import matplotlib.dates as mdates
 
 
 def read_weight(db_func):
     logger.info("Reading weight from the database")
     db = next(db_func())
-    weights = read_weights_impl(db)  # [(id, value, htime)]
-    # weights = weights[300:]  # skip first 300 records
+    weights = read_weights_impl(db)  # read all raw weights record
     logger.info(f"Read {len(weights)} weights from the database")
-    logger.info(f"First weight: {weights[0] if weights else 'None'}")
+
+
+def analyze_weight(db_func):
+    logger.info("Reading weight from the database")
+    db = next(db_func())
+
+    start_date_literal = "2025-04-02"
+    start_date = datetime.datetime.strptime(start_date_literal, "%Y-%m-%d")
+    weights = read_weights_impl(
+        db, start_time=start_date.timestamp()
+    )  # read all raw weights record
+    logger.info(
+        f"Read {len(weights)} weights from the database since {start_date_literal}"
+    )
+    target_weight = 90.0  # target weight in kg
+    # plot
+    x = np.array([w.htime for w in weights])
+    x_time = [datetime.datetime.fromtimestamp(t) for t in x]
+    y = np.array([float(w.value) for w in weights])
+    k, d = linear_regression_1d(x, y)
+    logger.info(f"Linear regression result: k={k}, d={d}")
+
+    # predict when the weight will reach the target weight by this k, d estimation
+    target_time = (target_weight - d) / k
+    target_time = datetime.datetime.fromtimestamp(target_time)
+    logger.info(
+        f"Estimated time to reach target weight {target_weight} kg: {target_time.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(x_time, y, label="Raw Weights", color="blue", marker="o", markersize=3)
+    # plot the linear regression line
+    plt.plot(
+        x_time,
+        k * x + d,
+        label=f"Linear Regression: y = {k:.2f}x + {d:.2f}",
+        color="red",
+        linestyle="--",
+    )
+    # plot target weight and the cross point
+    plt.axhline(
+        target_weight,
+        color="green",
+        linestyle="--",
+        label=f"Target Weight: {target_weight} kg",
+    )
+    plt.axvline(
+        # target_time.timestamp(),
+        target_time,
+        color="orange",
+        linestyle="--",
+        label=f"Estimated Time: {target_time.strftime('%Y-%m-%d %H:%M:%S')}",
+    )
+    # plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    plt.title("Weight Analysis")
+    plt.xlabel("Time")
+    plt.ylabel("Weight (kg)")
+
+    # plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    # plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
+    # plt.xticks(rotation=45)
+    # plt.tight_layout()
+
+    plt.show()
 
 
 def sample_weight(db_func):
