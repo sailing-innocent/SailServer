@@ -22,18 +22,13 @@ def read_from_weight(weight: Weight):
     )
 
 
-def weight_from_data(weight_data: WeightData):
-    return Weight(
-        id=weight_data.id,
-        value=weight_data.value,
-        htime=datetime.fromtimestamp(weight_data.htime),
-        tag=weight_data.tag,
-        description=weight_data.description,
-    )
-
-
 def create_weight_impl(db, weight_create: WeightData):
-    weight = weight_from_data(weight_create)
+    weight = Weight(
+        value=weight_create.value,
+        htime=datetime.fromtimestamp(weight_create.htime),
+        tag=weight_create.tag,
+        description=weight_create.description,
+    )
     db.add(weight)
     db.commit()
     db.refresh(weight)
@@ -74,7 +69,13 @@ def read_weights_impl(
 
 
 def update_weight_impl(db, id, weight: WeightData):
-    db.query(Weight).filter(Weight.id == id).update(weight_from_data(weight))
+    weight_rec = db.query(Weight).filter(Weight.id == id).first()
+    if weight_rec is None:
+        return None
+    weight_rec.value = weight.value
+    weight_rec.htime = datetime.fromtimestamp(weight.htime)
+    weight_rec.tag = weight.tag
+    weight_rec.description = weight.description
     db.commit()
     return read_weight_impl(db, id)
 
