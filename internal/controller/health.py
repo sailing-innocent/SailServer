@@ -19,7 +19,11 @@ from internal.model.health import (
 from sqlalchemy.orm import Session
 from typing import Generator
 
+from datetime import datetime
 
+
+# output
+# htime: timestamp string in ISO format
 class WeightDataWriteDTO(DataclassDTO[WeightData]):
     config = DTOConfig(exclude={"id"})
 
@@ -57,8 +61,8 @@ class WeightController(Controller):
         router_dependency: Generator[Session, None, None],
         skip: int = 0,
         limit: int = 10,
-        start: int = -1,
-        end: int = -1,
+        start: float = None,  # timestamp as float in seconds
+        end: float = None,  # timestamp as float in seconds
     ) -> list[WeightData]:
         """
         Get the weight data list.

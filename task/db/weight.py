@@ -6,7 +6,12 @@
 # @version 1.0
 # ---------------------------------
 
-from internal.model.health import read_weights_impl
+from internal.model.health import (
+    read_weights_impl,
+    read_weight_impl,
+    update_weight_impl,
+    create_weight_impl,
+)
 from internal.data.health import WeightData
 import logging
 
@@ -24,6 +29,16 @@ def read_weight(db_func):
     weights = read_weights_impl(db)  # [(id, value, htime)]
     # weights = weights[300:]  # skip first 300 records
     logger.info(f"Read {len(weights)} weights from the database")
+    logger.info(f"First weight: {weights[0] if weights else 'None'}")
+
+
+def sample_weight(db_func):
+    logger.info("Reading weight from the database")
+    db = next(db_func())
+    weights = read_weights_impl(db)  # [(id, value, htime)]
+    # weights = weights[300:]  # skip first 300 records
+    logger.info(f"Read {len(weights)} weights from the database")
+    logger.info(f"First weight: {weights[0] if weights else 'None'}")
 
     x = np.array([w.htime for w in weights])
     y = np.array([float(w.value) for w in weights])
@@ -46,14 +61,6 @@ def read_weight(db_func):
     logger.info(all_date_per_weeks)
 
     y_filtered = savgol_filter(y, 5, 2)
-    # plt.scatter(x, y)
-    # plt.plot(x, ysp, color="red")
-    # plt.title("Weight")
-    # plt.xlabel("Time")
-    # plt.ylabel("Weight")
-    # plt.xlim(0, xmax - xmin)
-    # plt.ylim(ymin, np.max(y) + 5)
-    # plt.show()
     time_reqs = [xsp for xsp, _ in all_date_per_days]
     logging.info(f"Time reqs: {time_reqs}")
     logging.info(f"Time reqs len: {len(time_reqs)}")
@@ -69,7 +76,9 @@ def read_weight(db_func):
     logging.info(f"Sampled values: {res}")
     logging.info(f"Number of sampled values: {len(res)}")
 
-    # plt.scatter(time_reqs, res)
+    # convert time_reqs to datetime for plotting
+    time_reqs_datetime = [datetime.datetime.fromtimestamp(t) for t in time_reqs]
+    # plt.scatter(time_reqs_plt, res)
     # plt.title("Weight")
     # plt.xlabel("Time")
     # plt.ylabel("Weight")
@@ -77,35 +86,31 @@ def read_weight(db_func):
     # plt.grid()
     # plt.show()
 
-    # post-process
-
-    # wrs = [
-    #     WeightRecordData(
-    #         value=str(round(res[i], 2)),
-    #         htime=time_reqs[i],
-    #         tag="daily,"
-    #         + datetime.datetime.fromtimestamp(time_reqs[i]).strftime("%Y-%m-%d"),
-    #     )
-    #     for i in range(len(res))
-    # ]
+    wrs = [
+        WeightData(
+            value=str(round(res[i], 2)),
+            htime=time_reqs[i],
+            tag="daily," + time_reqs_datetime[i].strftime("%Y-%m-%d"),
+        )
+        for i in range(len(res))
+    ]
     # logger.info(f"Weight records: {wrs}")
-    # for wr in wrs:
-    #     # search for the same tag
-    #     weight_record = read_weight_record_impl(db, _tag=wr.tag)
-    #     if weight_record is not None:
-    #         logger.info(f"Weight record {weight_record.id} already exists, updating...")
-    #         update_weight_record_impl(
-    #             db,
-    #             weight_record.id,
-    #             WeightRecordData(
-    #                 value=wr.value,
-    #                 htime=wr.htime,
-    #                 tag=wr.tag,
-    #             ),
-    #         )
-    #     else:
-    #         # create weight record
-    #         logger.info(f"Creating weight record: {wr}")
-    #         create_weight_record_impl(db, wr)
-
+    for wr in wrs:
+        # search for the same tag
+        weight_record = read_weight_impl(db, _tag=wr.tag)
+        if weight_record is not None:
+            logger.info(f"Weight record {weight_record.id} already exists, updating...")
+            update_weight_impl(
+                db,
+                weight_record.id,
+                WeightData(
+                    value=wr.value,
+                    htime=wr.htime,
+                    tag=wr.tag,
+                ),
+            )
+        else:
+            # create weight record
+            logger.info(f"Creating weight record: {wr}")
+            create_weight_impl(db, wr)
     return "Done"

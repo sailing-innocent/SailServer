@@ -6,10 +6,11 @@
 # @version 1.0
 # ---------------------------------
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, TIMESTAMP, func
 from .orm import ORMBase
 from dataclasses import dataclass, field
 from sqlalchemy.dialects.postgresql import JSONB
+from datetime import datetime
 # 设计原则就是可以一次测量的内容放在一张表内
 
 
@@ -18,7 +19,7 @@ class Weight(ORMBase):
     __tablename__ = "weights"
     id = Column(Integer, primary_key=True)
     value = Column(String)  # float in kg
-    htime = Column(Integer)  # happen time
+    htime = Column(TIMESTAMP, server_default=func.current_timestamp())  # happen time
     tag = Column(
         String, default="daily"
     )  # tag for the weight record, e.g. raw, daily, weekly, monthly, yearly (calculated from raw data)
@@ -32,8 +33,10 @@ class WeightData:
     """
 
     value: float
-    htime: int
+    htime: float = field(default_factory=lambda: datetime.now().timestamp())
     id: int = field(default=-1)
+    tag: str = field(default="raw")
+    description: str = field(default="")
 
 
 class BodySize(ORMBase):
@@ -45,6 +48,7 @@ class BodySize(ORMBase):
     tag = Column(
         String, default="daily"
     )  # tag for the body size record, e.g. daily, weekly, monthly, yearly (calculated from raw data)
+    htime = Column(TIMESTAMP, server_default=func.current_timestamp())  # happen time
 
 
 @dataclass
@@ -58,12 +62,13 @@ class BodySizeData:
     chest: float
     tag: str = field(default="daily")
     id: int = field(default=-1)
+    htime: float = field(default_factory=lambda: datetime.now().timestamp())
 
 
 class SportRecord(ORMBase):
     __tablename__ = "sport_record"
     id = Column(Integer, primary_key=True)
-    htime = Column(Integer)  # happen time
+    htime = Column(TIMESTAMP, server_default=func.current_timestamp())  # happen time
     feedback = Column(String, default="")  # arbitrary feedback for the sport record
     sport_type = Column(
         String, default="unknown"
@@ -79,7 +84,7 @@ class SportRecordData:
     The Sport Record Data
     """
 
-    htime: int
+    htime: float = field(default_factory=lambda: datetime.now().timestamp())
     feedback: str = field(default="")
     sport_type: str = field(default="unknown")
     data: dict = field(default_factory=dict)

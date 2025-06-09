@@ -11,7 +11,7 @@ from task.db.content_image import create_image, read_image, read_images
 from task.db.content import split_paragraph, read_book_chapter
 from task.db.service_account import create_service_account_from_csv
 from task.db.world import story_conclude
-from task.db.weight import read_weight
+from task.db.weight import read_weight, sample_weight
 from task.db.vault import update_notes
 from task.db.money import fix_account_balance
 
@@ -30,6 +30,7 @@ class DBTaskDispatcher:
             "split_paragraph": split_paragraph,
             "read_book_chapter": read_book_chapter,
             "read_weight": read_weight,
+            "sample_weight": sample_weight,
             "update_notes": update_notes,
             "fix_account_balance": fix_account_balance,
         }
