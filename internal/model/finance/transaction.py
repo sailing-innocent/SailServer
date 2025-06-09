@@ -6,9 +6,10 @@ from internal.data.finance import (
     AccountData,
     TransactionState,
 )
-from internal.data.finance import _acc, _acc_inv, _htime
+from internal.data.finance import _acc, _acc_inv, _htime, _htime_inv
 
 from utils.money import Money
+from datetime import datetime
 
 import time
 import logging
@@ -26,7 +27,6 @@ def validate_account_exists(db, account_id: int) -> bool:
 
 
 def trans_from_create(create: TransactionData):
-    htime = _htime(create)
     init_state = TransactionState(0)
     from_acc_id = _acc(create.from_acc_id)
     to_acc_id = _acc(create.to_acc_id)
@@ -38,7 +38,7 @@ def trans_from_create(create: TransactionData):
         description=create.description,
         tags=create.tags,
         state=init_state.value,
-        htime=htime,
+        htime=_htime(create.htime),
         ctime=time.time(),
         mtime=time.time(),
     )
@@ -57,7 +57,7 @@ def read_from_trans(trans: Transaction):
         description=trans.description,
         tags=tags,
         state=trans.state,
-        htime=trans.htime,
+        htime=_htime_inv(trans.htime),
         ctime=trans.ctime,
         mtime=trans.mtime,
     )
@@ -112,47 +112,40 @@ def create_transaction_impl(db, transaction_create: TransactionData):
     return read_from_trans(transaction)
 
 
-def read_transactions_impl(db, skip: int = 0, limit: int = 10):
-    transactions = (
-        db.query(Transaction)
-        .filter(Transaction.state != 0)
-        .order_by(Transaction.htime.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+def read_transactions_impl(
+    db,
+    skip: int = -1,
+    limit: int = -1,
+    from_time: float = None,
+    to_time: float = None,
+    _tags: str = None,
+    _desc: str = None,
+):
+    q = db.query(Transaction).filter(Transaction.state != 0)
+    if _tags is not None:
+        q = q.filter(Transaction.tags.like(f"%{_tags}%"))
+    if _desc is not None:
+        q = q.filter(Transaction.description.like(f"%{_desc}%"))
+    if from_time is not None:
+        q = q.filter(Transaction.htime >= _htime(from_time))
+    if to_time is not None:
+        q = q.filter(Transaction.htime <= _htime(to_time))
+
+    q = q.order_by(Transaction.htime.desc())
+    if skip >= 0:
+        q = q.offset(skip)
+    if limit > 0:
+        q = q.limit(limit)
+
+    transactions = q.all()
+    if transactions is None:
+        return []
     return [read_from_trans(transaction) for transaction in transactions]
 
 
 def read_transaction_impl(db, transaction_id: int):
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     return read_from_trans(transaction)
-
-
-def read_transactions_by_label_impl(db, label: str, from_time: int, to_time: int):
-    transactions = (
-        db.query(Transaction)
-        .filter(Transaction.htime >= from_time)
-        .filter(Transaction.htime <= to_time)
-        .filter(Transaction.state != 0)
-        .filter(Transaction.tags.like(f"%{label}%"))
-        .order_by(Transaction.htime.desc())
-        .all()
-    )
-    return [read_from_trans(transaction) for transaction in transactions]
-
-
-def read_transactions_by_desp_impl(db, desp: str, from_time: int, to_time: int):
-    transactions = (
-        db.query(Transaction)
-        .filter(Transaction.htime >= from_time)
-        .filter(Transaction.htime <= to_time)
-        .filter(Transaction.state != 0)
-        .filter(Transaction.description.like(f"%{desp}%"))
-        .order_by(Transaction.htime.desc())
-        .all()
-    )
-    return [read_from_trans(transaction) for transaction in transactions]
 
 
 def label_transaction_impl(db, transaction_id: int, label: str, positive: bool = True):
@@ -238,7 +231,6 @@ def update_transaction_impl(
         state.set_to_acc_changed()
 
     # if -1 means third party, write NULL
-    htime = _htime(transaction_update)
     transaction.from_acc_id = _acc(transaction_update.from_acc_id)
     transaction.to_acc_id = _acc(transaction_update.to_acc_id)
     transaction.prev_value = transaction.value
@@ -246,7 +238,7 @@ def update_transaction_impl(
     transaction.description = transaction_update.description
     transaction.tags = transaction_update.tags
     transaction.state = state.value
-    transaction.htime = htime
+    transaction.htime = _htime(transaction_update.htime)
     transaction.mtime = int(time.time())
     db.commit()
     db.refresh(transaction)

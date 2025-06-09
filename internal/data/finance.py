@@ -6,7 +6,7 @@
 # @version 1.0
 # ---------------------------------
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, func
 from .orm import ORMBase
 from sqlalchemy.orm import relationship
 import time
@@ -14,6 +14,7 @@ import time
 from utils.state import StateBits
 from enum import Enum
 from dataclasses import dataclass, field
+from datetime import datetime
 
 __all__ = [
     "Account",
@@ -25,6 +26,7 @@ __all__ = [
     "_acc",
     "_acc_inv",
     "_htime",
+    "_htime_inv",
 ]
 
 
@@ -39,8 +41,22 @@ def _acc_inv(x):
     return x if x is not None else -1
 
 
-def _htime(x):
-    return x.htime if x.htime != 0 else int(time.time())
+def _htime(x: float):
+    try:
+        return datetime.fromtimestamp(x) if x is not None else None
+    except (ValueError, OSError):
+        return None
+
+
+def _htime_inv(x: datetime):
+    if x is None:
+        return None
+    try:
+        return x.timestamp()
+    except (ValueError, OSError):
+        # 处理无效日期或超出范围的日期
+        # 可以返回一个默认值或者None
+        return None
 
 
 class Account(ORMBase):
@@ -121,7 +137,7 @@ class Transaction(ORMBase):
     description = Column(String)
     tags = Column(String)
     state = Column(Integer)  # 0: create 1: valid 2: virtual 3: done 4: cancel
-    htime = Column(Integer)  # happen time
+    htime = Column(TIMESTAMP, server_default=func.current_timestamp())  # happen time
     ctime = Column(Integer)
     mtime = Column(Integer)
 
@@ -137,7 +153,7 @@ class TransactionData:
     description: str = field(default="")
     tags: str = field(default="")
     state: int = field(default_factory=lambda: TransactionState(0).value)
-    htime: int = field(default_factory=lambda: int(time.time()))
+    htime: float = field(default_factory=lambda: datetime.now().timestamp())
     ctime: int = field(default_factory=lambda: int(time.time()))
     mtime: int = field(default_factory=lambda: int(time.time()))
 

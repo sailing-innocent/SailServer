@@ -8,7 +8,11 @@
 
 import numpy as np
 from internal.model.finance.account import AccountData, fix_account_balance_impl
+from internal.model.finance.transaction import read_transactions_impl
 import logging
+import datetime
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 logger = logging.getLogger(__name__)
 
@@ -32,3 +36,25 @@ def fix_account_balance(db_func, account_id: int, fix_value: float = 0.0):
     except Exception as e:
         logger.error(f"Error fixing account balance: {e}")
         raise e
+
+
+def read_transaction(db_func):
+    db = next(db_func())
+    start_date_literal = "2025-02-20"
+    end_date_literal = "2025-05-30"
+    start_date = datetime.datetime.strptime(start_date_literal, "%Y-%m-%d")
+    end_date = datetime.datetime.strptime(end_date_literal, "%Y-%m-%d")
+
+    transactions = read_transactions_impl(
+        db,
+        from_time=start_date.timestamp(),
+        to_time=end_date.timestamp(),
+        skip=0,
+        limit=1000,
+    )
+
+    logger.info(
+        f"Read {len(transactions)} transactions from {start_date_literal} to {end_date_literal}"
+    )
+
+    return "Done"
