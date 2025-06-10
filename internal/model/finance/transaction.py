@@ -118,12 +118,25 @@ def read_transactions_impl(
     limit: int = -1,
     from_time: float = None,
     to_time: float = None,
-    _tags: str = None,
+    _tags: str = [],
+    tag_op: str = "and",  # "and" or "or"
     _desc: str = None,
 ):
     q = db.query(Transaction).filter(Transaction.state != 0)
-    if _tags is not None:
-        q = q.filter(Transaction.tags.like(f"%{_tags}%"))
+    if len(_tags) > 0:
+        condition = None
+        for tag in _tags:
+            if tag is not None and tag.strip() != "":
+                if condition is None:
+                    condition = Transaction.tags.like(f"%{tag}%")
+                else:
+                    if tag_op == "or":
+                        condition = condition | Transaction.tags.like(f"%{tag}%")
+                    else:
+                        condition = condition & Transaction.tags.like(f"%{tag}%")
+        if condition is not None:
+            q = q.filter(condition)
+        # q = q.filter(Transaction.tags.like(f"%{_tags}%"))
     if _desc is not None:
         q = q.filter(Transaction.description.like(f"%{_desc}%"))
     if from_time is not None:

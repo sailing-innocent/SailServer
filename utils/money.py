@@ -92,6 +92,10 @@ class Money:
             raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
         return Money(self.value - other.value, self.currency)
 
+    # unary operator -
+    def __neg__(self):
+        return Money(-self.value, self.currency)
+
     # operator ==
     def __eq__(self, other):
         if self.currency != other.currency:
@@ -101,3 +105,12 @@ class Money:
 
     def __str__(self):
         return f"{self.value} {self.currency}"
+
+
+def sumup(money_iter):
+    total = Money("0.0", "CNY")
+    for money in money_iter:
+        if not isinstance(money, Money):
+            raise TypeError(f"Expected Money instance, got {type(money)}")
+        total += money
+    return total

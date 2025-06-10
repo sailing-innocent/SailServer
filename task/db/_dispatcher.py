@@ -13,7 +13,8 @@ from task.db.service_account import create_service_account_from_csv
 from task.db.world import story_conclude
 from task.db.weight import read_weight, sample_weight, analyze_weight
 from task.db.vault import update_notes
-from task.db.money import fix_account_balance, read_transaction
+from task.db.money import fix_account_balance, read_transaction, analyze_transaction
+from task.db.life import analyze_snack_weight_rel
 
 
 class DBTaskDispatcher:
@@ -35,6 +36,8 @@ class DBTaskDispatcher:
             "update_notes": update_notes,
             "fix_account_balance": fix_account_balance,
             "read_transaction": read_transaction,
+            "analyze_transaction": analyze_transaction,
+            "analyze_snack_weight_rel": analyze_snack_weight_rel,
         }
 
     def dispatch(self, task_name, task_args):

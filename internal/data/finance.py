@@ -15,6 +15,8 @@ from utils.state import StateBits
 from enum import Enum
 from dataclasses import dataclass, field
 from datetime import datetime
+from utils.money import Money
+from typing import List, Iterator
 
 __all__ = [
     "Account",
@@ -27,6 +29,7 @@ __all__ = [
     "_acc_inv",
     "_htime",
     "_htime_inv",
+    "transactions_money_iter",
 ]
 
 
@@ -250,3 +253,11 @@ class TransactionState(StateBits):
 
     def is_to_acc_deprecated(self):
         return self.is_attrib("to_acc_deprecated")
+
+
+def transactions_money_iter(transactions: List[TransactionData]) -> Iterator[Money]:
+    for transaction in transactions:
+        if transaction.from_acc_id != -1:
+            yield Money(transaction.value)
+        else:
+            yield -Money(transaction.value)
