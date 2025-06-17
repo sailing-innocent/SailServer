@@ -15,7 +15,6 @@ from litestar.openapi import OpenAPIConfig
 
 import logging
 from litestar.config.cors import CORSConfig
-import argparse
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
