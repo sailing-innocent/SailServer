@@ -39,7 +39,7 @@ from typing import Generator
 
 
 class AccountDataWriteDTO(DataclassDTO[AccountData]):
-    config = DTOConfig(exclude={"id", "balance", "state", "ctime", "mtime"})
+    config = DTOConfig(exclude={"id", "balance", "ctime", "mtime"})
 
 
 class AccountDataUpdateDTO(DataclassDTO[AccountData]):
