@@ -100,7 +100,7 @@ class AccountState(StateBits):
     def __init__(self, value: int):
         super().__init__(value)
         # State Machine
-        self.set_attrib_map({"valid": 0, "updated": 1})
+        self.set_attrib_map({"valid": 0, "archived": 1})
 
     def set_valid(self):
         self.set_attrib("valid")
@@ -111,14 +111,14 @@ class AccountState(StateBits):
     def is_valid(self):
         return self.is_attrib("valid")
 
-    def set_updated(self):
-        self.set_attrib("updated")
+    def set_archived(self):
+        self.set_attrib("archived")
 
-    def unset_updated(self):
-        self.unset_attrib("updated")
+    def unset_archived(self):
+        self.unset_attrib("archived")
 
-    def is_updated(self):
-        return self.is_attrib("updated")
+    def is_archived(self):
+        return self.is_attrib("archived")
 
 
 # transaction

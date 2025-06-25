@@ -101,7 +101,15 @@ class AccountController(Controller):
         Create a new account data.
         """
         db = next(router_dependency)
-        account = create_account_impl(db, data)
+        name = data.name.strip()  # only name is required
+        if not name:
+            request.logger.error("Account name cannot be empty.")
+            raise HTTPException(status_code=400, detail="Account name cannot be empty.")
+        if len(name) > 100:
+            request.logger.error("Account name is too long.")
+            raise HTTPException(status_code=400, detail="Account name is too long.")
+        else:
+            account = create_account_impl(db, AccountData(name=name))
         request.logger.info(f"Create account: {account}")
         if account is None:
             return None

@@ -51,8 +51,17 @@ def create_account_impl(db, account_create: AccountData):
     return read_from_account(account)
 
 
-def read_accounts_impl(db, skip: int = 0, limit: int = 10):
-    accounts = db.query(Account).offset(skip).limit(limit).all()
+def read_accounts_impl(db, skip: int = 0, limit: int = 10, is_valid: bool = True):
+    q = db.query(Account)
+    if is_valid:
+        q = q.filter(Account.state == 0)
+    if skip > 0:
+        q = q.offset(skip)
+    if limit > 0:
+        q = q.limit(limit)
+    accounts = q.all()
+    if accounts is None or len(accounts) == 0:
+        return []
     res = [read_from_account(account) for account in accounts]
     return res
 
