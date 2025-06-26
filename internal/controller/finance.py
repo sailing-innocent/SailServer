@@ -81,7 +81,7 @@ class AccountController(Controller):
         self,
         router_dependency: Generator[Session, None, None],
         skip: int = 0,
-        limit: int = 10,
+        limit: int = 100,
     ) -> list[AccountData]:
         """
         Get the account data list.
