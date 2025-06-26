@@ -29,6 +29,11 @@ def clean_all_impl(db):
 def account_from_create(create: AccountData):
     return Account(
         name=create.name,
+        description=create.description,
+        balance=create.balance,
+        state=create.state,
+        ctime=create.ctime,
+        mtime=create.mtime,
     )
 
 
