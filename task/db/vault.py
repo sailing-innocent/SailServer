@@ -22,7 +22,7 @@ def update_notes(db_func):
         return
 
     to_update_file = os.path.join(vault_path, "to_update")
-    with open(to_update_file, "r") as f:
+    with open(to_update_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     all_files = []
@@ -37,7 +37,7 @@ def update_notes(db_func):
             continue
         note_f = os.path.join(vault_path, line)
         if os.path.exists(note_f):
-            with open(note_f, "r") as f:
+            with open(note_f, "r", encoding="utf-8") as f:
                 content = f.read()
             # logger.info(f"Updating {line} with content: {content}")
             try:
@@ -62,7 +62,7 @@ def update_notes(db_func):
             logger.warning(f"File {line} does not exist.")
 
     # overwrite the to_update file with failed files
-    with open(to_update_file, "w") as f:
+    with open(to_update_file, "w", encoding="utf-8") as f:
         for failed_file in failed_files:
             f.write(f"{failed_file}\n")
         f.write("\n")
