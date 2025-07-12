@@ -15,6 +15,7 @@ from internal.model.health import (
     read_weight_impl,
     read_weights_impl,
     create_weight_impl,
+    target_weight_impl
 )
 from sqlalchemy.orm import Session
 from typing import Generator
@@ -35,6 +36,32 @@ class WeightController(Controller):
     dto = WeightDataWriteDTO
     return_dto = WeightDataReadDTO
     path = "/weight"
+
+    @get("/target")
+    async def get_target_weight(
+        self,
+        date: str,
+        router_dependency: Generator[Session, None, None],
+        request: Request,
+    ) -> WeightData:
+        """
+        Get the target weight for a specific date.
+        """
+        db = next(router_dependency)
+        try:
+            target_date = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            request.logger.error(f"Invalid date format: {date}")
+            return None
+
+
+        weight = target_weight_impl(db, target_date)
+        request.logger.info(f"Get target weight for {date}: {weight}")
+        if weight is None:
+            return None
+
+        return weight
+
 
     @get("/{weight_id:int}")
     async def get_weight(
