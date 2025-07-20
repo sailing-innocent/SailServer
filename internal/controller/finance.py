@@ -290,3 +290,8 @@ class TransactionController(Controller):
         transaction = delete_transaction_impl(db, transaction_id)
         request.logger.info(f"Delete transaction: {transaction}")
         return None
+
+
+# -------------
+# Budget Controller
+# -------------

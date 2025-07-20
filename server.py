@@ -9,6 +9,9 @@
 import asyncio
 import os
 import json
+import hashlib
+import time
+from datetime import datetime
 from litestar import Litestar, Router, get, Request
 from litestar.response import Redirect
 from litestar.openapi import OpenAPIConfig
@@ -42,6 +45,31 @@ class SailServer:
         self.page_alias = ["/health", "/asset", "/playground", "/content", "/project"]
         self.api_router = None
         self.debug = os.environ.get("DEV_MODE", "false").lower() == "true"
+        self.log_file = os.environ.get("SERVER_LOG_FILE")
+
+    def _create_custom_rotating_handler(self):
+        """Create a custom rotating file handler with timestamp-based backup naming."""
+        import logging.handlers
+        
+        class TimestampRotatingFileHandler(logging.handlers.RotatingFileHandler):
+            def doRollover(self):
+                if self.stream:
+                    self.stream.close()
+                    self.stream = None
+                
+                # Generate timestamp for backup file
+                save_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_name = f"{self.baseFilename}.bk.{save_time}"
+                
+                # Rename current log file to backup
+                if os.path.exists(self.baseFilename):
+                    os.rename(self.baseFilename, backup_name)
+                
+                # Open new log file
+                if not self.delay:
+                    self.stream = self._open()
+        
+        return TimestampRotatingFileHandler
 
     def init(self):
         @get("/health")
@@ -92,15 +120,65 @@ class SailServer:
             ],
         )
 
-        logging_config = LoggingConfig(
-            root={"level": "INFO", "handlers": ["queue_listener"]},
-            formatters={
-                "standard": {
-                    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        # Setup logging configuration with file handler if log file is specified
+        handlers = ["queue_listener"]
+        formatters = {
+            "standard": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            }
+        }
+
+        # Create custom handler instance if log file is specified
+        handler_config = {}
+        if self.log_file:
+            # Remove console handlers and use only file handler
+            handlers = ["file"]
+            formatters["file"] = {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            }
+            
+            # Configure the file handler in LoggingConfig
+            handler_config = {
+                "file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "filename": self.log_file,
+                    "maxBytes": 512 * 1024,  # 512KB
+                    "backupCount": 0,  # We'll override this behavior
+                    "formatter": "file",
+                    "level": "INFO",
                 }
-            },
+            }
+
+        logging_config = LoggingConfig(
+            root={"level": "INFO", "handlers": handlers},
+            handlers=handler_config,
+            formatters=formatters,
             log_exceptions="always",
         )
+        
+        # Override the rotating behavior after Litestar sets up logging
+        if self.log_file:
+            def setup_custom_rotation():
+                # Find and replace the rotating file handler with our custom one
+                root_logger = logging.getLogger()
+                for handler in root_logger.handlers[:]:
+                    if isinstance(handler, logging.handlers.RotatingFileHandler):
+                        root_logger.removeHandler(handler)
+                        handler.close()
+                
+                # Add our custom rotating handler
+                custom_handler = self._create_custom_rotating_handler()(
+                    filename=self.log_file,
+                    maxBytes=512 * 1024,  # 512KB
+                    backupCount=0  # We handle backups manually
+                )
+                custom_handler.setLevel(logging.INFO)
+                custom_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+                root_logger.addHandler(custom_handler)
+            
+            # Store the setup function to call after app initialization
+            self._setup_custom_rotation = setup_custom_rotation
+
         cors_config = CORSConfig(allow_origins=["*"], allow_methods=["*"])
 
         # Configure OpenAPI documentation
@@ -121,6 +199,10 @@ class SailServer:
             on_shutdown=[self.on_shutdown],
             openapi_config=openapi_config,
         )
+        
+        # Setup custom rotation after Litestar configures logging
+        if self.log_file and hasattr(self, '_setup_custom_rotation'):
+            self._setup_custom_rotation()
 
     async def on_startup(self):
         logger.info("Server starting up...")
@@ -136,13 +218,23 @@ class SailServer:
         logger.info(f"Server running on {self.host}:{self.port}")
         import uvicorn
 
-        uvicorn.run(
-            self.app,
-            host=self.host,
-            port=self.port,
-            log_level="info",
-            access_log=False,
-        )
+        # Configure uvicorn to use our logging setup
+        uvicorn_config = {
+            "host": self.host,
+            "port": self.port,
+            "log_level": "info",
+            "access_log": False,
+            "use_colors": False,  # Disable colors for file logging
+        }
+        
+        # If we have a log file, disable uvicorn's default logging
+        if self.log_file:
+            uvicorn_config.update({
+                "log_config": None,  # Disable uvicorn's logging config
+                "access_log": False,
+            })
+
+        uvicorn.run(self.app, **uvicorn_config)
 
 
 def main():
