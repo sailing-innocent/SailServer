@@ -27,8 +27,7 @@ from litestar.logging import LoggingConfig
 
 
 from utils.env import read_env
-
-read_env("prod")
+import argparse
 
 from internal.exception_handlers import exception_handlers
 from litestar.static_files import create_static_files_router
@@ -50,25 +49,25 @@ class SailServer:
     def _create_custom_rotating_handler(self):
         """Create a custom rotating file handler with timestamp-based backup naming."""
         import logging.handlers
-        
+
         class TimestampRotatingFileHandler(logging.handlers.RotatingFileHandler):
             def doRollover(self):
                 if self.stream:
                     self.stream.close()
                     self.stream = None
-                
+
                 # Generate timestamp for backup file
                 save_time = datetime.now().strftime("%Y%m%d_%H%M%S")
                 backup_name = f"{self.baseFilename}.bk.{save_time}"
-                
+
                 # Rename current log file to backup
                 if os.path.exists(self.baseFilename):
                     os.rename(self.baseFilename, backup_name)
-                
+
                 # Open new log file
                 if not self.delay:
                     self.stream = self._open()
-        
+
         return TimestampRotatingFileHandler
 
     def init(self):
@@ -136,7 +135,7 @@ class SailServer:
             formatters["file"] = {
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             }
-            
+
             # Configure the file handler in LoggingConfig
             handler_config = {
                 "file": {
@@ -155,9 +154,10 @@ class SailServer:
             formatters=formatters,
             log_exceptions="always",
         )
-        
+
         # Override the rotating behavior after Litestar sets up logging
         if self.log_file:
+
             def setup_custom_rotation():
                 # Find and replace the rotating file handler with our custom one
                 root_logger = logging.getLogger()
@@ -165,17 +165,21 @@ class SailServer:
                     if isinstance(handler, logging.handlers.RotatingFileHandler):
                         root_logger.removeHandler(handler)
                         handler.close()
-                
+
                 # Add our custom rotating handler
                 custom_handler = self._create_custom_rotating_handler()(
                     filename=self.log_file,
                     maxBytes=512 * 1024,  # 512KB
-                    backupCount=0  # We handle backups manually
+                    backupCount=0,  # We handle backups manually
                 )
                 custom_handler.setLevel(logging.INFO)
-                custom_handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+                custom_handler.setFormatter(
+                    logging.Formatter(
+                        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                    )
+                )
                 root_logger.addHandler(custom_handler)
-            
+
             # Store the setup function to call after app initialization
             self._setup_custom_rotation = setup_custom_rotation
 
@@ -199,9 +203,9 @@ class SailServer:
             on_shutdown=[self.on_shutdown],
             openapi_config=openapi_config,
         )
-        
+
         # Setup custom rotation after Litestar configures logging
-        if self.log_file and hasattr(self, '_setup_custom_rotation'):
+        if self.log_file and hasattr(self, "_setup_custom_rotation"):
             self._setup_custom_rotation()
 
     async def on_startup(self):
@@ -226,13 +230,15 @@ class SailServer:
             "access_log": False,
             "use_colors": False,  # Disable colors for file logging
         }
-        
+
         # If we have a log file, disable uvicorn's default logging
         if self.log_file:
-            uvicorn_config.update({
-                "log_config": None,  # Disable uvicorn's logging config
-                "access_log": False,
-            })
+            uvicorn_config.update(
+                {
+                    "log_config": None,  # Disable uvicorn's logging config
+                    "access_log": False,
+                }
+            )
 
         uvicorn.run(self.app, **uvicorn_config)
 
@@ -253,4 +259,11 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Sail Server")
+    parser.add_argument("--dev", action="store_true", help="Run in development mode")
+    args = parser.parse_args()
+    if args.dev:
+        read_env("dev")
+    else:
+        read_env("prod")
     main()
