@@ -7,281 +7,122 @@
 # ---------------------------------
 
 from pydantic import BaseModel
-from internal.data.life import Accommodation, Asset, ClothState, ServiceAccount
+from internal.data.life import (
+    ServiceAccount,
+    Project,
+    ProjectData,
+)
+from datetime import datetime
 
 
 def clean_all_impl(db):
-    db.query(Asset).delete()
-    db.query(Accommodation).delete()
-    db.query(ServiceAccount).delete()
+    db.query(Project).delete()
     db.commit()
 
 
 # ------------------------------------------------
-# Accommodation
+# Project Management
 # ------------------------------------------------
 
 
-class AccommodationCreate(BaseModel):
-    name: str
-    description: str
-    address: str
-
-
-class AccommodationRead(BaseModel):
-    id: int
-    name: str
-    description: str
-    address: str
-
-
-def accommodation_from_create(create: AccommodationCreate):
-    return Accommodation(
-        name=create.name, description=create.description, address=create.address
-    )
-
-
-def read_from_accommodation(accommodation: Accommodation):
-    return AccommodationRead(
-        id=accommodation.id,
-        name=accommodation.name,
-        description=accommodation.description,
-        address=accommodation.address,
-    )
-
-
-def create_accommodation_impl(db, accommodation_create: AccommodationCreate):
-    accommodation = accommodation_from_create(accommodation_create)
-    db.add(accommodation)
-    db.commit()
-    return read_from_accommodation(accommodation)
-
-
-def get_accommodation_impl(db, accommodation_id: int):
-    accommodation = (
-        db.query(Accommodation).filter(Accommodation.id == accommodation_id).first()
-    )
-    return read_from_accommodation(accommodation)
-
-
-def get_accommodations_impl(db):
-    accommodations = db.query(Accommodation).all()
-    return [read_from_accommodation(accommodation) for accommodation in accommodations]
-
-
-def update_accommodation_impl(
-    db, accommodation_id: int, accommodation_update: AccommodationCreate
-):
-    accommodation = (
-        db.query(Accommodation).filter(Accommodation.id == accommodation_id).first()
-    )
-    accommodation.name = accommodation_update.name
-    accommodation.description = accommodation_update.description
-    accommodation.address = accommodation_update.address
-    db.commit()
-    return read_from_accommodation(accommodation)
-
-
-def delete_accommodation_impl(db, accommodation_id: int):
-    accommodation = (
-        db.query(Accommodation).filter(Accommodation.id == accommodation_id).first()
-    )
-    db.delete(accommodation)
-    db.commit()
-    return read_from_accommodation(accommodation)
-
-
-# ------------------------------------------------
-# Asset
-# ------------------------------------------------
-
-
-class AssetCreate(BaseModel):
-    name: str
-    description: str
-    asset_type: str
-    state: int
-    tags: str
-    accomodation_id: int
-
-
-class AssetRead(BaseModel):
-    id: int
-    name: str
-    description: str
-    asset_type: str
-    state: int
-    tags: str
-    accomodation_id: int
-
-
-def asset_from_create(create: AssetCreate):
-    return Asset(
+def project_from_create(create: ProjectData):
+    return Project(
+        parent_id=create.parent_id,
         name=create.name,
         description=create.description,
-        asset_type=create.asset_type,
-        state=create.state,
+        raw_tags=create.raw_tags,
         tags=create.tags,
-        accomodation_id=create.accomodation_id,
+        state=create.state,
+        weight=create.weight,
+        extra=create.extra,
+        ddl=create.ddl if create.ddl else datetime.now(),
     )
 
 
-def read_from_asset(asset: Asset):
-    return AssetRead(
-        id=asset.id,
-        name=asset.name,
-        description=asset.description,
-        asset_type=asset.asset_type,
-        state=asset.state,
-        tags=asset.tags,
-        accomodation_id=asset.accomodation_id,
+def read_from_project(project: Project):
+    return ProjectData(
+        id=project.id,
+        parent_id=project.parent_id,
+        name=project.name,
+        description=project.description,
+        raw_tags=project.raw_tags,
+        tags=project.tags,
+        state=project.state,
+        ctime=project.ctime,
+        mtime=project.mtime,
+        ddl=project.ddl,
+        weight=project.weight,
+        extra=project.extra,
     )
 
 
-def create_asset_impl(db, asset_create: AssetCreate):
-    asset = asset_from_create(asset_create)
-    db.add(asset)
+def create_project_impl(db, project_create: ProjectData):
+    project = project_from_create(project_create)
+    db.add(project)
     db.commit()
-    return read_from_asset(asset)
+    db.refresh(project)
+    return read_from_project(project)
 
 
-def get_asset_impl(db, asset_id: int):
-    asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    return read_from_asset(asset)
+def get_project_impl(db, project_id: int):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        return None
+    return read_from_project(project)
 
 
-def get_assets_impl(db, asset_type: str = None, tag: str = None):
-    query = db.query(Asset)
-    if asset_type is not None:
-        query = query.filter(Asset.asset_type == asset_type)
-    if tag is not None:
-        query = query.filter(Asset.tags.like(f"%{tag}%"))
+def get_projects_impl(db, skip: int = 0, limit: int = -1, parent_id: int = None):
+    query = db.query(Project)
 
-    assets = query.all()
-    return [read_from_asset(asset) for asset in assets]
+    if parent_id is not None:
+        if parent_id == 0:  # Special case for root projects
+            query = query.filter(Project.parent_id.is_(None))
+        else:
+            query = query.filter(Project.parent_id == parent_id)
 
+    # Order by weight (high to low) and then by name
+    query = query.order_by(Project.weight.desc(), Project.name)
 
-def update_asset_impl(db, asset_id: int, asset_update: AssetCreate):
-    asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    asset.name = asset_update.name
-    asset.description = asset_update.description
-    asset.asset_type = asset_update.asset_type
-    asset.state = asset_update.state
-    asset.tags = asset_update.tags
-    asset.accomodation_id = asset_update.accomodation_id
-    db.commit()
-    return read_from_asset(asset)
-
-
-def delete_asset_impl(db, asset_id: int):
-    asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    db.delete(asset)
-    db.commit()
-    return read_from_asset(asset)
-
-
-# ------------------------------------------------
-# Service Account
-# ------------------------------------------------
-
-
-class ServiceAccountCreate(BaseModel):
-    name: str
-    entry: str
-    username: str
-    password: str
-    desp: str
-    expire_time: int
-
-
-class ServiceAccountRead(BaseModel):
-    id: int
-    name: str
-    entry: str
-    username: str
-    password: str
-    desp: str
-    expire_time: int
-
-
-def service_account_from_create(create: ServiceAccountCreate):
-    return ServiceAccount(
-        name=create.name,
-        entry=create.entry,
-        username=create.username,
-        password=create.password,
-        desp=create.desp,
-        expire_time=create.expire_time,
-    )
-
-
-def read_from_service_account(service_account: ServiceAccount):
-    return ServiceAccountRead(
-        id=service_account.id,
-        name=service_account.name,
-        entry=service_account.entry,
-        username=service_account.username,
-        password=service_account.password,
-        desp=service_account.desp,
-        expire_time=service_account.expire_time,
-    )
-
-
-def create_service_account_impl(db, service_account_create: ServiceAccountCreate):
-    service_account = service_account_from_create(service_account_create)
-    db.add(service_account)
-    db.commit()
-    return read_from_service_account(service_account)
-
-
-def get_service_account_impl(db, service_account_id: int):
-    service_account = (
-        db.query(ServiceAccount).filter(ServiceAccount.id == service_account_id).first()
-    )
-    return read_from_service_account(service_account)
-
-
-def query_service_account_by_name_impl(db, name: str):
-    service_account = (
-        db.query(ServiceAccount).filter(ServiceAccount.name == name).first()
-    )
-    return read_from_service_account(service_account)
-
-
-def get_service_accounts_impl(db, skip: int = 0, limit: int = -1):
-    query = db.query(ServiceAccount)
     if skip > 0:
         query = query.offset(skip)
     if limit > 0:
         query = query.limit(limit)
 
-    service_accounts = query.all()
-    return [
-        read_from_service_account(service_account)
-        for service_account in service_accounts
-    ]
+    projects = query.all()
+    return [read_from_project(project) for project in projects]
 
 
-def update_service_account_impl(
-    db, service_account_id: int, service_account_update: ServiceAccountCreate
-):
-    service_account = (
-        db.query(ServiceAccount).filter(ServiceAccount.id == service_account_id).first()
-    )
-    service_account.name = service_account_update.name
-    service_account.entry = service_account_update.entry
-    service_account.username = service_account_update.username
-    service_account.password = service_account_update.password
-    service_account.desp = service_account_update.desp
-    service_account.expire_time = service_account_update.expire_time
+def update_project_impl(db, project_id: int, project_update: ProjectData):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        return None
+
+    project.name = project_update.name
+    project.description = project_update.description
+    project.raw_tags = project_update.raw_tags
+    project.tags = project_update.tags
+    project.state = project_update.state
+    project.weight = project_update.weight
+    project.extra = project_update.extra
+    project.ddl = project_update.ddl if project_update.ddl else project.ddl
+    project.mtime = datetime.now()
+    project.parent_id = project_update.parent_id
+
     db.commit()
-    return read_from_service_account(service_account)
+    db.refresh(project)
+    return read_from_project(project)
 
 
-def delete_service_account_impl(db, service_account_id: int):
-    service_account = (
-        db.query(ServiceAccount).filter(ServiceAccount.id == service_account_id).first()
-    )
-    db.delete(service_account)
+def delete_project_impl(db, project_id: int):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        return None
+
+    # Find and delete all child projects first
+    children = db.query(Project).filter(Project.parent_id == project_id).all()
+    for child in children:
+        delete_project_impl(db, child.id)
+
+    db.delete(project)
     db.commit()
-    return read_from_service_account(service_account)
+    return read_from_project(project)

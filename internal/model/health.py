@@ -10,6 +10,7 @@ from internal.data.health import Weight, WeightData
 import time
 from datetime import datetime
 
+
 def read_from_weight(weight: Weight):
     # print(f"Reading weight: {weight.htime.timestamp()}")
     # if weight is None:
@@ -86,6 +87,7 @@ def delete_weight_impl(db, id=None):
         db.query(Weight).delete()
     db.commit()
 
+
 def target_weight_impl(db, target_date: datetime):
     """
     Get the target weight for a specific date.
@@ -93,11 +95,11 @@ def target_weight_impl(db, target_date: datetime):
     # hard-code here
     start_date = "2025-04-02"
     start_weight = 115.0
-    # duration = 365 # one year 
-    duration = 270 # 9 months
-    target_dec = 30 # 30kg in one year
+    # duration = 365 # one year
+    duration = 270  # 9 months
+    target_dec = 30  # 30kg in one year
     decay_rate = target_dec / duration
-    
+
     # Linear Approximation for target weight
     start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
     if target_date < start_date:

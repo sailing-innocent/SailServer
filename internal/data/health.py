@@ -63,29 +63,3 @@ class BodySizeData:
     tag: str = field(default="daily")
     id: int = field(default=-1)
     htime: float = field(default_factory=lambda: datetime.now().timestamp())
-
-
-class SportRecord(ORMBase):
-    __tablename__ = "sport_record"
-    id = Column(Integer, primary_key=True)
-    htime = Column(TIMESTAMP, server_default=func.current_timestamp())  # happen time
-    feedback = Column(String, default="")  # arbitrary feedback for the sport record
-    sport_type = Column(
-        String, default="unknown"
-    )  # type of the sport, e.g. running, walking, cycling, etc.
-    data = Column(
-        JSONB, nullable=True
-    )  # json binary data for the sport record, e.g. steps, distance, calories, etc.
-
-
-@dataclass
-class SportRecordData:
-    """
-    The Sport Record Data
-    """
-
-    htime: float = field(default_factory=lambda: datetime.now().timestamp())
-    feedback: str = field(default="")
-    sport_type: str = field(default="unknown")
-    data: dict = field(default_factory=dict)
-    id: int = field(default=-1)
