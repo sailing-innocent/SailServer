@@ -6,7 +6,7 @@
 # @version 1.0
 # ---------------------------------
 
-from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary, TEXT, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary, TEXT, DateTime, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from dataclasses import dataclass, field
@@ -41,8 +41,8 @@ class Chapter(ORMBase):
     book = relationship("Book", backref="chapters")
     content_node_id = Column(Integer, ForeignKey("content_node.id"))
     content_node = relationship("ContentNode")
-    ctime = Column(Integer)
-    mtime = Column(Integer)
+    ctime = Column(TIMESTAMP, server_default=func.current_timestamp())
+    mtime = Column(TIMESTAMP, server_default=func.current_timestamp())
     order = Column(Integer)  # order of the chapter in the book
 
 
@@ -52,8 +52,8 @@ class ChapterData:
     title: str = field(default="")
     book_id: int = field(default=-1)
     content_node_id: int = field(default=-1)
-    ctime: int = field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
-    mtime: int = field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
+    ctime: datetime = field(default_factory=lambda: datetime.datetime.now())
+    mtime: datetime = field(default_factory=lambda: datetime.datetime.now())
     order: int = field(default=0)
     content: str = field(default="")  # return content as string
 
@@ -152,8 +152,8 @@ class VaultNote(ORMBase):
     note_id = Column(String(255), nullable=False)  # note uuid
     title = Column(String(255), nullable=False)  # note title
     desc = Column(String(255), nullable=True)  # note description
-    ctime = Column(Integer, nullable=False)  # create time
-    mtime = Column(Integer, nullable=False)  # update time
+    ctime = Column(TIMESTAMP, server_default=func.current_timestamp())  # create time
+    mtime = Column(TIMESTAMP, server_default=func.current_timestamp())  # update time
     tags = Column(String(255), nullable=True)  # note tags
     content = Column(TEXT, nullable=True)  # raw content with metadata
 
@@ -169,8 +169,8 @@ class VaultNoteData:
     note_id: str
     title: str
     desc: str = field(default="")
-    ctime: int = field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
-    mtime: int = field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
+    ctime: datetime = field(default_factory=lambda: datetime.datetime.now())
+    mtime: datetime = field(default_factory=lambda: datetime.datetime.now())
     tags: str = field(default="")
     content: str = field(default="")
     id: int = field(default=-1)

@@ -39,8 +39,8 @@ def trans_from_create(create: TransactionData):
         tags=create.tags,
         state=init_state.value,
         htime=_htime(create.htime),
-        ctime=time.time(),
-        mtime=time.time(),
+        ctime=datetime.now(),
+        mtime=datetime.now(),
     )
 
 
@@ -252,7 +252,7 @@ def update_transaction_impl(
     transaction.tags = transaction_update.tags
     transaction.state = state.value
     transaction.htime = _htime(transaction_update.htime)
-    transaction.mtime = int(time.time())
+    transaction.mtime = datetime.now()
     db.commit()
     db.refresh(transaction)
 

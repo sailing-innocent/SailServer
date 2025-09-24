@@ -25,6 +25,7 @@ from internal.model.content.content import (
 from utils.book_parser import BPChapter
 import time
 import logging
+from datetime import datetime
 
 
 def clean_all_impl(db):
@@ -38,8 +39,8 @@ def chapter_from_create(create: ChapterData):
         title=create.title,
         book_id=create.book_id,
         content_node_id=create.content_node_id,
-        ctime=int(time.time()),
-        mtime=int(time.time()),
+        ctime=datetime.now(),
+        mtime=datetime.now(),
         order=create.order,
     )
 

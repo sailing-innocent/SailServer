@@ -15,6 +15,7 @@ from internal.data.finance import _acc, _acc_inv, _htime
 from utils.money import Money
 import time
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,7 @@ def update_account_balance_impl(db, account_id: int) -> AccountData:
         out_trans.state = state.value
 
     account.balance = balance_value.value_str
-    account.mtime = int(time.time())
+    account.mtime = datetime.now()
 
     db.commit()
     db.refresh(account)
@@ -199,7 +200,7 @@ def recalc_account_balance_impl(db, account_id: int) -> AccountData:
         out_trans.state = state.value
 
     account.balance = balance_value.value_str
-    account.mtime = int(time.time())
+    account.mtime = datetime.now()
     db.commit()
     db.refresh(account)
     return read_from_account(account)

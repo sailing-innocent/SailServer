@@ -27,7 +27,6 @@ class Setting(ORMBase):
     name = Column(String(255), nullable=True)  # setting name
     data = Column(JSONB, nullable=True)  # setting data in json binary
 
-
 class Story(ORMBase):
     __tablename__ = "stories"
     __table_args__ = {"extend_existing": True}
@@ -36,16 +35,6 @@ class Story(ORMBase):
     content_node_id = Column(Integer, ForeignKey("content_node.id"))
     content_node = relationship("ContentNode", backref="stories")
     data = Column(JSONB, nullable=True)  # story data in json binary
-
-
-class Description(ORMBase):
-    __tablename__ = "descriptions"
-    __table_args__ = {"extend_existing": True}
-    id = Column(Integer, primary_key=True)
-    content_node_id = Column(Integer, ForeignKey("content_node.id"))
-    content_node = relationship("ContentNode")
-    data = Column(JSONB, nullable=True)
-
 
 class ContentNote(ORMBase):
     __tablename__ = "content_notes"

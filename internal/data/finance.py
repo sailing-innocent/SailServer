@@ -69,8 +69,8 @@ class Account(ORMBase):
     description = Column(String)
     balance = Column(String)
     state = Column(Integer)  # 0: physical account 1: budget pocket
-    ctime = Column(Integer)
-    mtime = Column(Integer)
+    ctime = Column(TIMESTAMP, server_default=func.current_timestamp())
+    mtime = Column(TIMESTAMP, server_default=func.current_timestamp())
 
     # Define relationships without circular foreign_keys
     in_transactions = relationship(
@@ -92,8 +92,8 @@ class AccountData:
     description: str = field(default="")
     balance: str = field(default=str(0.0))
     state: int = field(default_factory=lambda: AccountState(0).value)
-    ctime: int = field(default_factory=lambda: int(time.time()))
-    mtime: int = field(default_factory=lambda: int(time.time()))
+    ctime: datetime = field(default_factory=lambda: datetime.now())
+    mtime: datetime = field(default_factory=lambda: datetime.now())
 
 
 class AccountState(StateBits):
@@ -141,8 +141,8 @@ class Transaction(ORMBase):
     tags = Column(String)
     state = Column(Integer)  # 0: create 1: valid 2: virtual 3: done 4: cancel
     htime = Column(TIMESTAMP, server_default=func.current_timestamp())  # happen time
-    ctime = Column(Integer)
-    mtime = Column(Integer)
+    ctime = Column(TIMESTAMP, server_default=func.current_timestamp())
+    mtime = Column(TIMESTAMP, server_default=func.current_timestamp())
 
 
 @dataclass
@@ -157,8 +157,8 @@ class TransactionData:
     tags: str = field(default="")
     state: int = field(default_factory=lambda: TransactionState(0).value)
     htime: float = field(default_factory=lambda: datetime.now().timestamp())
-    ctime: int = field(default_factory=lambda: int(time.time()))
-    mtime: int = field(default_factory=lambda: int(time.time()))
+    ctime: datetime = field(default_factory=lambda: datetime.now())
+    mtime: datetime = field(default_factory=lambda: datetime.now())
 
 
 class TransactionState(StateBits):
