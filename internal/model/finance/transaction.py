@@ -190,10 +190,10 @@ def delete_transaction_impl(db, transaction_id: int = None):
 
     if state.is_from_acc_valid():
         state.unset_from_acc_valid()
-        state.set_from_acc_deprecated()
+    state.set_from_acc_deprecated()
     if state.is_to_acc_valid():
         state.unset_to_acc_valid()
-        state.set_to_acc_deprecated()
+    state.set_to_acc_deprecated()
     state.unset_from_acc_updated()
     state.unset_to_acc_updated()
     state.unset_from_acc_changed()

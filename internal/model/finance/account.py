@@ -11,9 +11,7 @@ from internal.data.finance import (
     TransactionState,
     TransactionData,
 )
-from internal.data.finance import _acc, _acc_inv, _htime
 from utils.money import Money
-import time
 import logging
 from datetime import datetime
 
@@ -113,7 +111,7 @@ def update_account_balance_impl(db, account_id: int) -> AccountData:
         try:
             if state.is_from_acc_valid():
                 if not state.is_from_acc_updated():
-                    logging.info(f"OutTransaction Value: {out_trans.value}")
+                    # logging.info(f"OutTransaction Value: {out_trans.value}")
                     balance_value -= Money(out_trans.value)
                     state.set_from_acc_updated()
                 if state.is_from_acc_changed():

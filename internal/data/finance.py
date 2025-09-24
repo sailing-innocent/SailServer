@@ -253,10 +253,6 @@ class TransactionState(StateBits):
     def is_to_acc_deprecated(self):
         return self.is_attrib("to_acc_deprecated")
 
-
-    
-
-
 def transactions_money_iter(transactions: List[TransactionData]) -> Iterator[Money]:
     for transaction in transactions:
         if transaction.from_acc_id != -1:
