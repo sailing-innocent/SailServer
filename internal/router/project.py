@@ -8,12 +8,12 @@
 
 from litestar import Router
 from litestar.di import Provide
-from internal.controller.life import ProjectController
+from internal.controller.project import ProjectController
 from internal.db import get_db_dependency
 
 
 router = Router(
-    path="/life",
+    path="/project",
     dependencies={"router_dependency": Provide(get_db_dependency)},
     route_handlers=[
         ProjectController,

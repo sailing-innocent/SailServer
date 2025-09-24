@@ -12,7 +12,7 @@ from litestar import Controller, delete, get, post, put, Request, Response
 from litestar.exceptions import NotFoundException
 
 from internal.data.life import ProjectData
-from internal.model.life import (
+from internal.model.project import (
     create_project_impl,
     get_project_impl,
     get_projects_impl,
@@ -24,11 +24,13 @@ from typing import Generator, List, Optional
 
 
 class ProjectDataWriteDTO(DataclassDTO[ProjectData]):
-    config = DTOConfig(exclude={"id"})
+    config = DTOConfig(exclude={"id", "ctime", "mtime", "parent_id", "state", "extra"})
 
+class ProjectDataUpdateDTO(DataclassDTO[ProjectData]):
+    config = DTOConfig(exclude={"id", "ctime", "mtime", "parent_id", "state", "extra"})
 
-class ProjectDataReadDTO(DataclassDTO[ProjectData]): ...
-
+class ProjectDataReadDTO(DataclassDTO[ProjectData]):
+    config = DTOConfig(exclude={"ctime"})
 
 class ProjectController(Controller):
     dto = ProjectDataWriteDTO

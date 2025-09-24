@@ -6,7 +6,7 @@
 # @version 1.0
 # ---------------------------------
 
-from internal.model.life import (
+from internal.model.service import (
     ServiceAccount,
     ServiceAccountCreate,
     ServiceAccountRead,

@@ -14,6 +14,7 @@ from utils.state import StateBits
 from dataclasses import dataclass, field
 from datetime import datetime
 
+LAST_TIMESTAMP_LIFE = datetime.date(2199, 1, 1)
 
 # 服务资产，存在有效期限
 class ServiceAccount(ORMBase):
@@ -46,26 +47,75 @@ class ServiceAccountData:
 class Project(ORMBase):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True)
-    parent_id = Column(
-        Integer, ForeignKey("projects.id"), nullable=True
-    )  # self reference for sub-projects
-    parent = relationship(
-        "Project", remote_side=[id], backref="sub_projects"
-    )  # self reference for sub-projects
     name = Column(String)
     description = Column(String)
-    raw_tags = Column(String)  # raw tags, comma separated
-    tags = Column(String)  # processed tags, space separated
-    state = Column(Integer)  # 0: active, 1: archived
+    state = Column(Integer)  # Project State
     ctime = Column(TIMESTAMP, server_default=func.current_timestamp())  # creation time
-    mtime = Column(
-        TIMESTAMP, server_default=func.current_timestamp()
-    )  # modification time
-    ddl = Column(BigInteger)  # deadline in timestamp in seconds
-    weight = Column(Integer)  # weight for sorting importance, default to 0
+    mtime = Column(TIMESTAMP, server_default=func.current_timestamp())  # modification time
+    ddl = Column(TIMESTAMP)  # deadline in timestamp in seconds
     extra = Column(
         JSONB, nullable=True
     )  # extra information, e.g. priority, progress, requirement condition, etc.
+
+class ProjectState:
+    # Project State Machine
+    # -----------------------------------------------------
+    # INVALID -> VALID -> PREPARE -> TRACKING ---> DONE
+    #                                  ^   |
+    #                                  |   v
+    #                                  PENDING---> CANCEL
+    # ------------------------------------------------------
+    # state enum
+    INVALID = 0
+    VALID = 1
+    PREPARE = 2
+    TRACKING = 3
+    DONE = 4
+    PENDING = 5
+    CANCELED = 6
+    _state = INVALID
+    def __init__(self, state: int = INVALID):
+        self._state = self.INVALID
+
+    def valid(self):
+        self._state = self.VALID
+
+    def prepare(self):
+        if (self._state == self.VALID):
+            self._state = self.PREPARE
+        else:
+            raise ValueError("Invalid state for prepare")
+
+    def tracking(self):
+        if (self._state == self.PREPARE):
+            self._state = self.TRACKING
+        else:
+            raise ValueError("Invalid state for tracking")
+
+    def pending(self):
+        if (self._state == self.TRACKING):
+            self._state = self.PENDING
+        else:
+            raise ValueError("Invalid state for pending")
+
+    def restore(self):
+        if (self._state == self.PENDING):
+            self._state = self.TRACKING
+        else:
+            raise ValueError("Invalid state for restore")
+
+    def done(self):
+        if (self._state == self.PENDING):
+            self._state = self.DONE
+        else:
+            raise ValueError("Invalid state for done")
+
+    def cancel(self):
+        # no need to check state
+        self._state = self.CANCELED
+
+    def get_state(self) -> int:
+        return self._state
 
 
 @dataclass
@@ -75,14 +125,21 @@ class ProjectData:
     """
 
     id: int = field(default=None)
-    parent_id: int = field(default=None)
     name: str = field(default="")
     description: str = field(default="")
-    raw_tags: str = field(default="")
-    tags: str = field(default="")
-    state: int = field(default=0)
+    state: ProjectState = field(default_factory=lambda: ProjectState())
     ctime: datetime = field(default_factory=lambda: datetime.now())
     mtime: datetime = field(default_factory=lambda: datetime.now())
-    ddl: int = field(default=0)
-    weight: int = field(default=0)
+    ddl: datetime = field(default_factory=lambda: LAST_TIMESTAMP_LIFE)
     extra: dict = field(default_factory=dict)
+
+class ProjectExtra:
+    def __init__(self):
+        self.json_data = {}
+
+    def _from_json(self, json_data: dict):
+        self.json_data = json_data
+
+    def _to_json(self):
+        return self.json_data
+

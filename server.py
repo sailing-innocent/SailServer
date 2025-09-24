@@ -43,11 +43,8 @@ class SailServer:
         self.site_dist = os.environ.get("SITE_DIST", "site_dist")
         self.page_alias = [
             "/health",
-            "/asset",
-            "/playground",
-            "/content",
+            "/money",
             "/project",
-            "/life",
         ]
         self.api_router = None
         self.debug = os.environ.get("DEV_MODE", "false").lower() == "true"
@@ -114,7 +111,7 @@ class SailServer:
         from internal.router.health import router as health_router
         from internal.router.finance import router as finance_router
         from internal.router.content import router as content_router
-        from internal.router.life import router as life_router
+        from internal.router.project import router as project_router
 
         self.api_router = Router(
             path=self.api_endpoint,
@@ -124,7 +121,7 @@ class SailServer:
                 health_router,
                 finance_router,
                 content_router,
-                life_router,
+                project_router,
             ],
         )
 
