@@ -86,3 +86,30 @@ def delete_weight_impl(db, id=None):
     else:
         db.query(Weight).delete()
     db.commit()
+
+
+def target_weight_impl(db, target_date: datetime):
+    """
+    Get the target weight for a specific date.
+    """
+    # hard-code here
+    start_date = "2025-04-02"
+    start_weight = 115.0
+    # duration = 365 # one year
+    duration = 270  # 9 months
+    target_dec = 30  # 30kg in one year
+    decay_rate = target_dec / duration
+
+    # Linear Approximation for target weight
+    start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+    if target_date < start_date:
+        return None
+    days_passed = (target_date - start_date).days
+    target_weight = start_weight - decay_rate * days_passed
+    return WeightData(
+        id=-1,  # No ID for target weight
+        value=target_weight,
+        htime=-1,
+        tag="target",
+        description="Target weight based on linear approximation",
+    )

@@ -47,7 +47,7 @@ class AccountDataUpdateDTO(DataclassDTO[AccountData]):
 
 
 class AccountDataReadDTO(DataclassDTO[AccountData]):
-    config = DTOConfig(exclude={"ctime", "state"})
+    config = DTOConfig(exclude={"ctime"})
 
 
 class AccountController(Controller):
@@ -81,7 +81,7 @@ class AccountController(Controller):
         self,
         router_dependency: Generator[Session, None, None],
         skip: int = 0,
-        limit: int = 10,
+        limit: int = 100,
     ) -> list[AccountData]:
         """
         Get the account data list.
@@ -170,20 +170,28 @@ class AccountController(Controller):
 
         return account
 
-    @delete("/{account_id:int}")
+    @delete("/{account_id:int}", status_code=200)
     async def delete_account(
         self,
         account_id: int,
         router_dependency: Generator[Session, None, None],
         request: Request,
-    ) -> None:
+    ) -> dict:
         """
         Delete the account data.
         """
         db = next(router_dependency)
         account = delete_account_impl(db, account_id)
+        if account is None:
+            request.logger.error(f"Account {account_id} not found")
+            raise HTTPException(status_code=404, detail="Account not found")
+
         request.logger.info(f"Delete account: {account}")
-        return None
+        return {
+            "id": account_id,
+            "status": "success",
+            "message": f"Account {account_id} deleted successfully",
+        }
 
 
 # -------------
@@ -276,17 +284,30 @@ class TransactionController(Controller):
 
         return transaction
 
-    @delete("/{transaction_id:int}")
+    @delete("/{transaction_id:int}", status_code=200)
     async def delete_transaction(
         self,
         transaction_id: int,
         router_dependency: Generator[Session, None, None],
         request: Request,
-    ) -> None:
+    ) -> dict:
         """
         Delete the transaction data.
         """
         db = next(router_dependency)
         transaction = delete_transaction_impl(db, transaction_id)
+        if transaction is None:
+            request.logger.error(f"Transaction {transaction_id} not found")
+            raise HTTPException(status_code=404, detail="Transaction not found")
+
         request.logger.info(f"Delete transaction: {transaction}")
-        return None
+        return {
+            "id": transaction_id,
+            "status": "success",
+            "message": f"Transaction {transaction_id} deleted successfully",
+        }
+
+
+# -------------
+# Budget Controller
+# -------------

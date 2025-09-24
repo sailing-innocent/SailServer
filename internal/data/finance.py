@@ -160,7 +160,6 @@ class TransactionData:
     ctime: datetime = field(default_factory=lambda: datetime.now())
     mtime: datetime = field(default_factory=lambda: datetime.now())
 
-
 class TransactionState(StateBits):
     def __init__(self, value: int):
         super().__init__(value)
@@ -255,9 +254,33 @@ class TransactionState(StateBits):
         return self.is_attrib("to_acc_deprecated")
 
 
+    
+
+
 def transactions_money_iter(transactions: List[TransactionData]) -> Iterator[Money]:
     for transaction in transactions:
         if transaction.from_acc_id != -1:
             yield Money(transaction.value)
         else:
             yield -Money(transaction.value)
+
+
+# Budget is a plan for future transactions, frequently used for project management
+
+class Budget(ORMBase):
+    __tablename__ = "budgets"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    amount = Column(String)  # Decimal float
+    description = Column(String)
+    tags = Column(String, default="")
+    htime = Column(TIMESTAMP, server_default=func.current_timestamp())  # happen time
+
+@dataclass
+class BudgetData:
+    id: int = field(default=-1)
+    name: str = field(default="")
+    amount: str = field(default="0.0")
+    description: str = field(default="")
+    tags: str = field(default="")
+    htime: float = field(default_factory=lambda: datetime.now().timestamp())

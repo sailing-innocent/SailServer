@@ -11,9 +11,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from .orm import ORMBase
 from sqlalchemy.orm import relationship
 from utils.state import StateBits
-from internal.data.finance import Transaction
 from dataclasses import dataclass, field
 from datetime import datetime
+
 
 # 服务资产，存在有效期限
 class ServiceAccount(ORMBase):
@@ -39,8 +39,9 @@ class ServiceAccountData:
     desp: str = field(default="")
     expire_time: int = field(default=0)
 
+
 # -----------------------------------------
-# The Life Project Notification
+# Long-Term Project Management
 # -----------------------------------------
 class Project(ORMBase):
     __tablename__ = "projects"
@@ -56,9 +57,7 @@ class Project(ORMBase):
     raw_tags = Column(String)  # raw tags, comma separated
     tags = Column(String)  # processed tags, space separated
     state = Column(Integer)  # 0: active, 1: archived
-    ctime = Column(
-        TIMESTAMP, server_default=func.current_timestamp()
-    )  # creation time
+    ctime = Column(TIMESTAMP, server_default=func.current_timestamp())  # creation time
     mtime = Column(
         TIMESTAMP, server_default=func.current_timestamp()
     )  # modification time
@@ -87,25 +86,3 @@ class ProjectData:
     ddl: int = field(default=0)
     weight: int = field(default=0)
     extra: dict = field(default_factory=dict)
-
-
-class Notification(ORMBase):
-    __tablename__ = "notification"
-    id = Column(Integer, primary_key=True)
-    title = Column(String(255), nullable=False)  # notification title
-    content = Column(String(1024), nullable=False)  # notification content
-    expire_time = Column(
-        BigInteger, nullable=False
-    )  # expire time, store as timestamp in seconds
-    state = Column(
-        Integer, nullable=False, default=0
-    )  # notification state, unread|expired|read|archived
-
-
-@dataclass
-class NotificationData:
-    id: int = field(default=None)
-    title: str = field(default="")
-    content: str = field(default="")
-    expire_time: int = field(default=0)
-    state: int = field(default=0)
